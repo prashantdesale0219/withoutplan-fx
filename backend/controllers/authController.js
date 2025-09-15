@@ -164,6 +164,15 @@ const login = asyncHandler(async (req, res) => {
   // Update last login
   await user.updateLastLogin();
   
+  // Check if user has a plan, if not, set default free plan
+  if (!user.plan || (user.plan === 'free' && user.credits.balance === 0)) {
+    user.plan = 'free';
+    user.planActivatedAt = Date.now();
+    user.credits.balance = 3;
+    user.credits.totalPurchased = user.credits.totalPurchased + 3;
+    await user.save();
+  }
+  
   res.status(200).json({
     success: true,
     message: 'Login successful',
@@ -177,7 +186,9 @@ const login = asyncHandler(async (req, res) => {
         role: user.role,
         lastLogin: user.lastLogin,
         preferences: user.preferences,
-        isEmailVerified: user.isEmailVerified
+        isEmailVerified: user.isEmailVerified,
+        plan: user.plan,
+        credits: user.credits.balance
       },
       token
     }

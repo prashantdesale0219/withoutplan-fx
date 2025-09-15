@@ -15,7 +15,8 @@ import {
   ShoppingCart,
   Users,
   BarChart,
-  Settings
+  Settings,
+  CreditCard
 } from 'lucide-react';
 import { getUserData, clearAuthCookies } from '../../lib/cookieUtils';
 
@@ -51,36 +52,16 @@ const Sidebar = () => {
       icon: Image,
       current: pathname === '/dashboard/image-editor'
     },
+  
+  
     {
-      name: 'Products',
-      href: '/dashboard/products',
-      icon: ShoppingBag,
-      current: pathname === '/dashboard/products'
+      name: 'Pricing',
+      href: '/dashboard/pricing',
+      icon: CreditCard,
+      current: pathname === '/dashboard/pricing'
     },
-    {
-      name: 'Orders',
-      href: '/dashboard/orders',
-      icon: ShoppingCart,
-      current: pathname === '/dashboard/orders'
-    },
-    {
-      name: 'Customers',
-      href: '/dashboard/customers',
-      icon: Users,
-      current: pathname === '/dashboard/customers'
-    },
-    {
-      name: 'Analytics',
-      href: '/dashboard/analytics',
-      icon: BarChart,
-      current: pathname === '/dashboard/analytics'
-    },
-    {
-      name: 'Settings',
-      href: '/dashboard/settings',
-      icon: Settings,
-      current: pathname === '/dashboard/settings'
-    }
+  
+    
   ];
 
   return (

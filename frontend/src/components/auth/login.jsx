@@ -10,7 +10,7 @@ import { FaApple } from 'react-icons/fa';
 import { IoMdClose } from 'react-icons/io';
 import { MdEmail } from 'react-icons/md';
 import { Eye, EyeOff } from 'lucide-react';
-import { setAuthToken, setUserData } from '../../lib/cookieUtils';
+import { setAuthToken, setUserData, getAuthToken, getUserData } from '../../lib/cookieUtils';
 import OptimizedImage from '../common/OptimizedImage';
 
 const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
@@ -89,9 +89,47 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
           onClose();
           
           // Add a small delay before redirecting to ensure cookies are set
-          setTimeout(() => {
+          setTimeout(async () => {
             // Dispatch custom event for navbar to detect login status change
             window.dispatchEvent(new Event('loginStatusChanged'));
+            
+            // Check if user has a plan, if not, automatically select free plan
+            try {
+              // First make sure the token is properly set before making authenticated requests
+              const token = getAuthToken();
+              if (!token) {
+                console.log('Auth token not set yet, setting again');
+                setAuthToken(response.data.data.token);
+              }
+              
+              // Add a small delay to ensure token is properly set
+              await new Promise(resolve => setTimeout(resolve, 300));
+              
+              const userResponse = await api.get('/api/plans/current');
+              const userData = userResponse.data.data;
+              
+              // If user doesn't have credits or has never selected a plan before
+              if (userData.credits === 0 || (!userData.planActivatedAt && userData.plan === 'free')) {
+                console.log('Automatically selecting free plan for new user');
+                const planResponse = await api.post('/api/plans/select', { plan: 'free' });
+                
+                if (planResponse.data.success) {
+                  // Update user data in local storage with new plan info
+                  const updatedUserData = getUserData();
+                  if (updatedUserData) {
+                    updatedUserData.plan = 'free';
+                    updatedUserData.credits = planResponse.data.data.credits;
+                    localStorage.setItem('user_data', JSON.stringify(updatedUserData));
+                    // Dispatch event to notify other components
+                    window.dispatchEvent(new Event('userDataChanged'));
+                  }
+                  toast.success('Free plan activated with 3 credits!');
+                }
+              }
+            } catch (error) {
+              console.error('Error checking/setting default plan:', error);
+              // Continue with redirect even if plan selection fails
+            }
             
             // Redirect to the stored path or dashboard if none
             const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
@@ -119,7 +157,13 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
       }
     } catch (error) {
       console.error('Auth error:', error);
-      toast.error(error.response?.data?.message || 'Authentication failed. Please try again.');
+      
+      // Handle network errors specifically
+      if (error.code === 'ERR_NETWORK') {
+        toast.error('Cannot connect to server. Please check if the backend server is running.');
+      } else {
+        toast.error(error.response?.data?.message || 'Authentication failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

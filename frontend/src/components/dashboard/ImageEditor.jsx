@@ -1,9 +1,11 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Upload, Image as ImageIcon, Loader, Download, ExternalLink } from 'lucide-react';
+import { Upload, Image as ImageIcon, Loader, Download, ExternalLink, CreditCard, AlertTriangle } from 'lucide-react';
 import ImageHistory from './ImageHistory';
 import api from '@/lib/api';
+import Link from 'next/link';
+import { getUserData, setUserData } from '@/lib/cookieUtils';
 
 const ImageEditor = () => {
   const [prompt, setPrompt] = useState('');
@@ -11,6 +13,55 @@ const ImageEditor = () => {
   const [resultImage, setResultImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [credits, setCredits] = useState(null);
+  const [showCreditWarning, setShowCreditWarning] = useState(false);
+  
+  useEffect(() => {
+    // Get user data and check credits
+    const userData = getUserData();
+    if (userData && userData.credits !== undefined) {
+      // Set credits from user data
+      setCredits(userData.credits.balance);
+      if (userData.credits.balance <= 3) {
+        setShowCreditWarning(true);
+      }
+    }
+    
+    // Add event listener for storage events to update credits in real-time
+    const handleStorageChange = () => {
+      const updatedUserData = getUserData();
+      if (updatedUserData && updatedUserData.credits !== undefined) {
+        console.log('Storage changed, updating credits:', updatedUserData.credits.balance);
+        setCredits(updatedUserData.credits.balance);
+        if (updatedUserData.credits.balance <= 3) {
+          setShowCreditWarning(true);
+        } else {
+          setShowCreditWarning(false);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Clean up event listener
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+  
+  // Update credits display whenever they change
+  useEffect(() => {
+    console.log('Credits updated:', credits);
+    
+    // Update credit warning based on current credits
+    if (credits !== null) {
+      if (credits <= 3) {
+        setShowCreditWarning(true);
+      } else {
+        setShowCreditWarning(false);
+      }
+    }
+  }, [credits]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,6 +76,16 @@ const ImageEditor = () => {
       toast.error('Please enter an image URL');
       return;
     }
+    
+    // Check if user has enough credits
+    if (credits !== null && credits <= 0) {
+      toast.error('You have no credits left. Please upgrade your plan to continue.');
+      setError('Insufficient credits. Please upgrade your plan to continue generating images.');
+      return;
+    }
+    
+    // Log current credits before making the request
+    console.log('Current credits before request:', credits);
     
     setLoading(true);
     setError(null);
@@ -60,6 +121,34 @@ const ImageEditor = () => {
       
       console.log('Image edit response:', response.data);
       
+      // Update credits information if available in response
+      if (response.data.credits) {
+        const newCredits = response.data.credits.remaining;
+        console.log('New credits from response:', newCredits);
+        setCredits(newCredits);
+        if (newCredits <= 3) {
+          setShowCreditWarning(true);
+        } else {
+          setShowCreditWarning(false);
+        }
+        
+        // Update user data in cookie with new credit information
+        const userData = getUserData();
+        if (userData) {
+          // Make sure we update the credits correctly
+          userData.credits.balance = newCredits;
+          setUserData(userData);
+          
+          // Also update localStorage directly to ensure it's updated
+          localStorage.setItem('user_data', JSON.stringify(userData));
+          console.log('Updated user data in cookie and localStorage with new credits:', userData);
+          
+          // Dispatch a storage event to notify other components
+          const storageEvent = new Event('storage');
+          window.dispatchEvent(storageEvent);
+        }
+      }
+      
       // Direct check for the specific format shown in user's input
       if (response.data && response.data.data && response.data.data.resultJson) {
         console.log('Checking for specific format in resultJson:', response.data.data.resultJson);
@@ -88,7 +177,13 @@ const ImageEditor = () => {
         
         console.log('Full response data:', response.data);
         
-        if (response.data.data && response.data.data.resultJson) {
+        // First check if resultUrls is directly available in the response
+        if (response.data.data && response.data.data.resultUrls && response.data.data.resultUrls.length > 0) {
+          resultImageUrl = response.data.data.resultUrls[0];
+          console.log('Found result image URL directly in resultUrls:', resultImageUrl);
+        }
+        // If not, try to parse from resultJson
+        else if (response.data.data && response.data.data.resultJson) {
           try {
             // Check if resultJson is already an object or needs parsing
             let resultJsonStr = typeof response.data.data.resultJson === 'string' 
@@ -181,7 +276,7 @@ const ImageEditor = () => {
         if (resultImageUrl) {
           setResultImage(resultImageUrl);
           
-          // Save to history in localStorage
+          // Save to history in localStorage with user-specific key
           const timestamp = new Date().toISOString();
           const historyItem = {
             id: `img_${Date.now()}`,
@@ -192,14 +287,25 @@ const ImageEditor = () => {
             taskId: response.data.data.taskId || null
           };
           
+          // Get user ID from user data
+          const userData = getUserData();
+          const userId = userData?._id || 'guest';
+          const historyKey = `imageEditHistory_${userId}`;
+          
+          console.log('Saving image to history for user:', userId);
+          
           // Get existing history or initialize empty array
-          const existingHistory = JSON.parse(localStorage.getItem('imageEditHistory') || '[]');
+          const existingHistory = JSON.parse(localStorage.getItem(historyKey) || '[]');
           
           // Add new item to the beginning of the array
           const updatedHistory = [historyItem, ...existingHistory].slice(0, 50); // Keep only last 50 items
           
-          // Save back to localStorage
-          localStorage.setItem('imageEditHistory', JSON.stringify(updatedHistory));
+          // Save back to localStorage with user-specific key
+          localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
+          
+          // Dispatch storage event to notify other components
+          const storageEvent = new Event('storage');
+          window.dispatchEvent(storageEvent);
           
           toast.success('Image edited successfully!');
         } else {
@@ -228,7 +334,35 @@ const ImageEditor = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">AI Image Editor</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">AI Image Editor</h2>
+        
+        {credits !== null && (
+          <div className="flex items-center gap-2 bg-[#f9f7f5] px-3 py-1 rounded-full">
+            <CreditCard className="w-4 h-4 text-[var(--coffee)]" />
+            <span className="text-sm font-medium">{credits} {credits === 1 ? 'credit' : 'credits'} remaining</span>
+          </div>
+        )}
+      </div>
+      
+      {showCreditWarning && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-yellow-500 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-yellow-800">Low Credits Warning</h3>
+              <p className="text-sm text-yellow-700 mb-2">
+                You're running low on credits. Upgrade your plan to continue generating images without interruption.
+              </p>
+              <Link href="/pricing">
+                <button className="bg-[var(--coffee)] text-white text-sm px-3 py-1 rounded hover:bg-[#3a1e12] transition-colors">
+                  Upgrade Plan
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>

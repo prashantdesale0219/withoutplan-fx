@@ -11,10 +11,48 @@ const DashboardHeader = () => {
   const desktopDropdownRef = useRef(null);
   
   useEffect(() => {
-    const userData = getUserData();
+    // Get user data from both cookie and localStorage
+    const getUserDataFromAll = () => {
+      // First try to get from cookie
+      let userData = getUserData();
+      
+      // If not in cookie, try localStorage
+      if (!userData) {
+        try {
+          const localUserData = localStorage.getItem('user_data');
+          if (localUserData) {
+            userData = JSON.parse(localUserData);
+            console.log('Got user data from localStorage');
+          }
+        } catch (error) {
+          console.error('Error parsing user data from localStorage:', error);
+        }
+      }
+      
+      return userData;
+    };
+    
+    const userData = getUserDataFromAll();
     if (userData) {
       setUser(userData);
+      console.log('Initial user data set in header:', userData);
     }
+    
+    // Add event listener for storage events to update user data in real-time
+    const handleStorageChange = () => {
+      const updatedUserData = getUserDataFromAll();
+      if (updatedUserData) {
+        console.log('Storage changed, updating user data in header:', updatedUserData);
+        setUser(updatedUserData);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Clean up event listener
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Close dropdown when clicking outside
@@ -59,6 +97,14 @@ const DashboardHeader = () => {
             <div className='text-xl sm:text-2xl font-bold text-coffee'>
               Dashboard
             </div>
+            {user && user.credits && (
+              <div className='ml-4 px-3 py-1 bg-gray-100 rounded-full text-sm font-medium text-gray-700 flex items-center'>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {user.credits.balance} {user.credits.balance === 1 ? 'Credit' : 'Credits'}
+              </div>
+            )}
           </div>
 
           {/* Mobile menu and profile buttons */}

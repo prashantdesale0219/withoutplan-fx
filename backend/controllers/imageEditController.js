@@ -1,13 +1,42 @@
 const axios = require('axios');
+const User = require('../models/User');
 require('dotenv').config();
 
 /**
  * @desc    Edit image using n8n webhook
  * @route   POST /api/image-edit
- * @access  Public
+ * @access  Private
  */
 exports.editImage = async (req, res) => {
   const { prompt, image_url } = req.body;
+  
+  // Check if user has enough credits
+  const user = await User.findById(req.user.id);
+  
+  if (!user) {
+    return res.status(404).json({
+      status: 'fail',
+      error: 'User not found'
+    });
+  }
+  
+  // Check if user has selected a plan
+  if (!user.plan) {
+    return res.status(403).json({
+      status: 'fail',
+      error: 'Please select a plan to generate images',
+      redirectTo: '/pricing'
+    });
+  }
+  
+  // Check if user has enough credits
+  if (user.credits.balance <= 0) {
+    return res.status(403).json({
+      status: 'fail',
+      error: 'You have run out of credits. Please upgrade your plan.',
+      redirectTo: '/pricing'
+    });
+  }
 
   // Validate input
   if (!prompt || !image_url) {
@@ -106,15 +135,60 @@ exports.editImage = async (req, res) => {
       );
       
       console.log('Extracted result URLs:', formattedData.resultJson.resultUrls);
+    } else if (formattedData.data && formattedData.data.resultJson) {
+      // Handle the case where resultJson is a string in the data object
+      try {
+        // Check if resultJson is a string and contains resultUrls
+        if (typeof formattedData.data.resultJson === 'string') {
+          // Remove any backticks that might be in the string
+          const cleanJson = formattedData.data.resultJson.replace(/`/g, '');
+          const parsedJson = JSON.parse(cleanJson);
+          
+          if (parsedJson.resultUrls && Array.isArray(parsedJson.resultUrls) && parsedJson.resultUrls.length > 0) {
+            // Clean up URLs (remove backticks, trim spaces)
+            const cleanUrls = parsedJson.resultUrls.map(url => url.replace(/`/g, '').trim());
+            formattedData.resultUrls = cleanUrls;
+            console.log('Extracted result URLs from data.resultJson:', cleanUrls);
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing resultJson from data object:', e);
+      }
     } else {
       console.warn('No resultUrls found in the response');
     }
     
-    // Return the formatted response
-    return res.json({
+    // Prepare the response data
+    const responseData = {
       status: 'success',
       data: formattedData
+    };
+    
+    // If we extracted resultUrls separately, include them directly in the response
+    if (formattedData.resultUrls && formattedData.resultUrls.length > 0) {
+      responseData.data.resultUrls = formattedData.resultUrls;
+    }
+    
+    // Deduct credit and update user stats
+    // Only deduct 1 credit per image generation
+    user.credits.balance -= 1;
+    user.credits.totalUsed += 1;
+    user.credits.imagesGenerated += 1;
+    await user.save();
+    
+    console.log('Updated user credits:', {
+      balance: user.credits.balance,
+      totalUsed: user.credits.totalUsed,
+      imagesGenerated: user.credits.imagesGenerated
     });
+    
+    // Add credit info to response
+    responseData.credits = {
+      remaining: user.credits.balance
+    };
+    
+    // Return the formatted response
+    return res.json(responseData);
 
   } catch (err) {
     console.error('Error communicating with n8n webhook:', err.message);

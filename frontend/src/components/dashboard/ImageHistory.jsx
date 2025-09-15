@@ -2,15 +2,21 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { Trash2, Download, ExternalLink, RefreshCw } from 'lucide-react';
+import { getUserData } from '@/lib/cookieUtils';
 
 const ImageHistory = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Load history from localStorage
+  // Load history from localStorage with user-specific key
   useEffect(() => {
     try {
-      const savedHistory = JSON.parse(localStorage.getItem('imageEditHistory') || '[]');
+      const userData = getUserData();
+      const userId = userData?._id || 'guest';
+      const historyKey = `imageEditHistory_${userId}`;
+      console.log('Loading image history for user:', userId);
+      
+      const savedHistory = JSON.parse(localStorage.getItem(historyKey) || '[]');
       setHistory(savedHistory);
     } catch (err) {
       console.error('Error loading image history:', err);
@@ -47,9 +53,13 @@ const ImageHistory = () => {
   // Delete history item
   const deleteHistoryItem = (id) => {
     try {
+      const userData = getUserData();
+      const userId = userData?._id || 'guest';
+      const historyKey = `imageEditHistory_${userId}`;
+      
       const updatedHistory = history.filter(item => item.id !== id);
       setHistory(updatedHistory);
-      localStorage.setItem('imageEditHistory', JSON.stringify(updatedHistory));
+      localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
       toast.success('Image removed from history');
     } catch (err) {
       console.error('Error deleting history item:', err);
@@ -61,8 +71,12 @@ const ImageHistory = () => {
   const clearAllHistory = () => {
     if (window.confirm('Are you sure you want to clear all image history?')) {
       try {
+        const userData = getUserData();
+        const userId = userData?._id || 'guest';
+        const historyKey = `imageEditHistory_${userId}`;
+        
         setHistory([]);
-        localStorage.setItem('imageEditHistory', '[]');
+        localStorage.setItem(historyKey, '[]');
         toast.success('Image history cleared');
       } catch (err) {
         console.error('Error clearing history:', err);
@@ -85,7 +99,11 @@ const ImageHistory = () => {
   const refreshHistory = () => {
     setLoading(true);
     try {
-      const savedHistory = JSON.parse(localStorage.getItem('imageEditHistory') || '[]');
+      const userData = getUserData();
+      const userId = userData?._id || 'guest';
+      const historyKey = `imageEditHistory_${userId}`;
+      
+      const savedHistory = JSON.parse(localStorage.getItem(historyKey) || '[]');
       setHistory(savedHistory);
       toast.success('History refreshed');
     } catch (err) {

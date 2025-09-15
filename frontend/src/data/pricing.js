@@ -1,69 +1,70 @@
 export const pricingData = {
   title: {
-    main: "Take your fashion photos",
-    highlight: "to the next level"
+    main: "Choose your plan",
+    highlight: "and start generating images"
   },
-  subtitle: "I need 30 photos per month",
-  slider: {
-    min: 20,
-    max: 500,
-    default: 30
-  },
-  billingOptions: [
-    { id: "monthly", label: "Monthly", isDefault: true },
-    { id: "annual", label: "Annual", discount: "Save 17%" }
-  ],
+  subtitle: "Select a plan that fits your needs",
   plans: [
     {
-      id: "lite",
-      name: "Lite",
-      icon: "⬆️",
-      description: "A great way to explore the Botika platform.",
-      price: 33,
-      credits: 30,
+      id: "free",
+      name: "Free",
+      icon: "🆓",
+      description: "Try our platform with limited features",
+      price: 0,
+      credits: 3,
       features: [
-        { text: "No Botika watermarks", included: true },
-        { text: "Limited selection of AI models", included: true },
-        { text: "Limited selection of backgrounds", included: true },
-        { text: "HD image resolution", included: true },
-        { text: "1 free photo review per credit", included: true },
-        { text: "Photo fixes ready in 4 business days", included: true },
-        { text: "Social ready images", included: true }
+        { text: "3 AI-generated images", included: true },
+        { text: "One-time per user", included: true },
+        { text: "Basic editing tools", included: true },
+        { text: "Standard resolution", included: true },
+        { text: "Community support", included: true }
+      ]
+    },
+    {
+      id: "basic",
+      name: "Basic",
+      icon: "🚀",
+      description: "Perfect for beginners and casual users",
+      price: 399,
+      credits: 50,
+      features: [
+        { text: "50 AI-generated images", included: true },
+        { text: "Advanced editing tools", included: true },
+        { text: "HD resolution", included: true },
+        { text: "Email support", included: true },
+        { text: "Monthly subscription", included: true }
       ]
     },
     {
       id: "pro",
       name: "Pro",
-      icon: "➕",
-      description: "Perfect for businesses of all sizes",
-      price: 35,
-      credits: 30,
+      icon: "⭐",
+      description: "Recommended for professionals",
+      price: 999,
+      credits: 200,
       popular: true,
       features: [
-        { text: "Includes everything in Lite, plus:", header: true },
-        { text: "Access to all models", included: true },
-        { text: "Access to all backgrounds", included: true },
-        { text: "2K image resolution", included: true },
-        { text: "2 free photo reviews per credit", included: true },
-        { text: "Photo fixes in 2 business days", included: true },
-        { text: "Support for headless images", included: true },
-        { text: "Allows uploads of flat lay images", included: true }
+        { text: "200 AI-generated images", included: true },
+        { text: "Premium editing tools", included: true },
+        { text: "4K resolution", included: true },
+        { text: "Priority support", included: true },
+        { text: "Commercial usage", included: true }
       ]
     },
     {
-      id: "advanced",
-      name: "Advanced",
-      icon: "⭐",
-      description: "Best for scaling your business with extra AI features",
-      price: 40,
-      credits: 30,
+      id: "enterprise",
+      name: "Enterprise",
+      icon: "🏢",
+      description: "For businesses with high volume needs",
+      price: 2999,
+      credits: 1000,
       features: [
-        { text: "Includes everything in Pro, plus:", header: true },
-        { text: "4K image resolution", included: true },
-        { text: "3 free photo reviews per credit", included: true },
-        { text: "Photo fixes in 1 business day", included: true },
-        { text: "White-glove quality control", included: true },
-        { text: "Multi-user access", included: true }
+        { text: "1000 AI-generated images", included: true },
+        { text: "All premium features", included: true },
+        { text: "Unlimited resolution", included: true },
+        { text: "Dedicated support", included: true },
+        { text: "API access", included: true },
+        { text: "Custom branding", included: true }
       ]
     }
   ]

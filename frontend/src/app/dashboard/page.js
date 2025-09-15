@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Shirt, Zap, Clock, CheckCircle } from 'lucide-react';
+import { User, Shirt, Zap, Clock, CheckCircle, Award, CreditCard } from 'lucide-react';
 import DashboardErrorBoundary from '@/components/dashboard/DashboardErrorBoundary';
 import { getAuthToken, getUserData } from '../../lib/cookieUtils';
 
@@ -27,6 +27,21 @@ const DashboardContent = () => {
 
     fetchDashboardData();
   }, [router]);
+  
+  // Add a second useEffect to check and update user data when it changes
+  useEffect(() => {
+    const checkUserData = () => {
+      const freshUserData = getUserData();
+      if (freshUserData && JSON.stringify(freshUserData) !== JSON.stringify(user)) {
+        setUser(freshUserData);
+      }
+    };
+    
+    // Check every 5 seconds for any updates to user data
+    const interval = setInterval(checkUserData, 5000);
+    
+    return () => clearInterval(interval);
+  }, [user]);
 
   const fetchDashboardData = async () => {
     try {
@@ -134,6 +149,67 @@ const DashboardContent = () => {
           Here&apos;s what&apos;s happening with your account today.
         </p>
       </div>
+      
+      {/* Plan and Credits Information */}
+      {user && (
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Award className="w-6 h-6 text-[var(--coffee)]" />
+            <h2 className="text-xl font-semibold">Your Plan</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-[#f9f7f5] p-4 rounded-lg">
+              <h3 className="text-lg font-medium mb-2">Current Plan</h3>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold capitalize">{user.plan || 'Free'}</span>
+                <Link href="/pricing">
+                  <span className="text-xs bg-[var(--coffee)] text-white px-2 py-1 rounded hover:bg-[#3a1e12] transition-colors cursor-pointer">
+                    Upgrade
+                  </span>
+                </Link>
+              </div>
+              <p className="text-sm text-gray-600 mt-2">
+                Activated: {user.planActivatedAt ? new Date(user.planActivatedAt).toLocaleDateString() : 'N/A'}
+              </p>
+            </div>
+            
+            <div className="bg-[#f9f7f5] p-4 rounded-lg">
+              <h3 className="text-lg font-medium mb-2">Credits</h3>
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-[var(--coffee)]" />
+                <span className="text-2xl font-bold">{user.credits?.balance || 0}</span>
+              </div>
+              <div className="mt-2 bg-gray-200 h-2 rounded-full overflow-hidden">
+                <div 
+                  className="bg-[var(--coffee)] h-full rounded-full" 
+                  style={{ width: `${Math.min(100, ((user.credits?.balance || 0) / ((user.credits?.balance || 0) + (user.credits?.imagesGenerated || 1))) * 100)}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">
+                {user.credits?.imagesGenerated || 0} images generated
+              </p>
+              {user.credits?.balance <= 0 && (
+                <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded">
+                  You have run out of credits. Please upgrade your plan to continue generating images.
+                </div>
+              )}
+            </div>
+            
+            <div className="bg-[#f9f7f5] p-4 rounded-lg">
+              <h3 className="text-lg font-medium mb-2">Need More?</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Upgrade your plan to get more credits and features.
+              </p>
+              <Link href="/pricing">
+                <button className="w-full py-2 px-4 bg-[var(--coffee)] text-white rounded hover:bg-[#3a1e12] transition-colors font-medium">
+                  View Plans
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

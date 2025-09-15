@@ -48,6 +48,12 @@ export async function POST(request) {
     );
 
     console.log('Backend response:', response.data);
+    
+    // Log credits information if available
+    if (response.data && response.data.credits) {
+      console.log('Credits from backend:', response.data.credits);
+    }
+    
     return NextResponse.json(response.data);
   } catch (error) {
     console.error('Error in image-edit API route:', error);

@@ -96,16 +96,29 @@ const userSchema = new mongoose.Schema({
       default: Date.now
     }
   },
+  plan: {
+    type: String,
+    enum: ['free', 'basic', 'pro', 'enterprise'],
+    default: 'free'
+  },
+  planActivatedAt: {
+    type: Date,
+    default: Date.now
+  },
   credits: {
     balance: {
       type: Number,
-      default: 100 // Default starting credits
+      default: 3 // Default starting credits for free plan
     },
     totalPurchased: {
       type: Number,
-      default: 100
+      default: 3
     },
     totalUsed: {
+      type: Number,
+      default: 0
+    },
+    imagesGenerated: {
       type: Number,
       default: 0
     },
