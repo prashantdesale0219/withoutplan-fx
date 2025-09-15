@@ -1,0 +1,52 @@
+# FashionX AI Image Editing API Endpoints
+
+## Image Edit Endpoint
+
+### POST /api/image-edit
+
+Edits an image using AI through n8n workflow integration.
+
+**Request Body:**
+```json
+{
+  "prompt": "Make it futuristic",
+  "image_url": "https://example.com/image.jpg"
+}
+```
+
+**Success Response:**
+```json
+{
+  "status": "success",
+  "data": {
+    "image_url": "https://cdn.kie.ai/output/12345.png"
+    // Other data returned from n8n workflow
+  }
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "prompt and image_url are required"
+}
+```
+
+## Setup Instructions
+
+1. Make sure to set the N8N_WEBHOOK_URL in your .env file:
+   ```
+   N8N_WEBHOOK_URL=https://<your-n8n-domain>/webhook/c7612ff4-9576-4d1b-a0ae-1b419229d78f
+   ```
+
+2. Start the server:
+   ```
+   npm run dev
+   ```
+
+3. Test the endpoint using curl or Postman:
+   ```
+   curl -X POST http://localhost:5000/api/image-edit \
+     -H "Content-Type: application/json" \
+     -d '{"prompt":"Make it futuristic","image_url":"https://example.com/image.jpg"}'
+   ```
