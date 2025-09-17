@@ -16,9 +16,9 @@ const setTokenCookie = (res, token) => {
     expires: new Date(
       Date.now() + (parseInt(process.env.JWT_EXPIRE?.replace('d', '')) || 7) * 24 * 60 * 60 * 1000
     ),
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    httpOnly: false, // Allow JavaScript access for frontend
+    secure: false, // Set to false for localhost development
+    sameSite: 'strict', // Use strict for better security in development
     path: '/'
   };
   
@@ -64,7 +64,9 @@ const signup = asyncHandler(async (req, res) => {
     console.log(`OTP email sent to: ${user.email}`);
   } catch (error) {
     console.error('Failed to send OTP email:', error);
-    // Don't fail registration if email fails
+    console.error('Email error details:', error.message);
+    // Don't fail registration if email fails - continue with registration
+    // User can still verify later or request OTP resend
   }
   
   res.status(201).json({
@@ -202,9 +204,10 @@ const logout = asyncHandler(async (req, res) => {
   // Clear cookie
   res.cookie('token', '', {
     expires: new Date(0),
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
+    httpOnly: false, // Match login cookie settings
+    secure: false, // Set to false for localhost development
+    sameSite: 'strict',
+    path: '/'
   });
   
   res.status(200).json({

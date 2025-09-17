@@ -215,6 +215,9 @@ const uploadConfigs = {
   // Single cloth image
   singleCloth: upload.single('cloth'),
   
+  // Image editor upload
+  singleImage: upload.single('image'),
+  
   // Multiple cloth images (for combo mode)
   multipleClothes: upload.array('clothes', 2),
   
@@ -227,6 +230,7 @@ const uploadConfigs = {
   // Memory storage versions
   singleModelMemory: uploadMemory.single('model'),
   singleClothMemory: uploadMemory.single('cloth'),
+  singleImageMemory: uploadMemory.single('image'),
   multipleClothesMemory: uploadMemory.array('clothes', 2)
 };
 

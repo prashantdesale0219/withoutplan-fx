@@ -13,6 +13,8 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const imageEditRoutes = require('./routes/imageEdit');
 const planRoutes = require('./routes/plan');
+const uploadRoutes = require('./routes/upload');
+const userImagesRoutes = require('./routes/userImages');
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -109,10 +111,12 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/image-edit', imageEditRoutes);
 app.use('/api/plans', planRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/user/images', userImagesRoutes);
 
 // Error handling middleware
 app.use(notFound);

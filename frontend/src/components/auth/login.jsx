@@ -21,6 +21,13 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState('');
+  const [errors, setErrors] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    general: ''
+  });
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -40,16 +47,79 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
   if (!isOpen) return null;
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: '',
+        general: ''
+      }));
+    }
+  };
+
+  // Validation functions
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) return 'Email is required';
+    if (!emailRegex.test(email)) return 'Please enter a valid email address';
+    return '';
+  };
+
+  const validatePassword = (password) => {
+    if (!password) return 'Password is required';
+    if (password.length < 6) return 'Password must be at least 6 characters long';
+    return '';
+  };
+
+  const validateName = (name, fieldName) => {
+    if (!name.trim()) return `${fieldName} is required`;
+    if (name.trim().length > 50) return `${fieldName} cannot exceed 50 characters`;
+    return '';
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      general: ''
+    };
+
+    // Validate email
+    newErrors.email = validateEmail(formData.email);
+    
+    // Validate password
+    newErrors.password = validatePassword(formData.password);
+    
+    // Validate names for registration
+    if (!isLoginMode) {
+      newErrors.firstName = validateName(formData.firstName, 'First name');
+      newErrors.lastName = validateName(formData.lastName, 'Last name');
+    }
+
+    setErrors(newErrors);
+    
+    // Return true if no errors
+    return !Object.values(newErrors).some(error => error !== '');
   };
 
 
   
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -88,7 +158,7 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
           // Close the login modal
           onClose();
           
-          // Add a small delay before redirecting to ensure cookies are set
+          // Add a longer delay before redirecting to ensure cookies are properly set
           setTimeout(async () => {
             // Dispatch custom event for navbar to detect login status change
             window.dispatchEvent(new Event('loginStatusChanged'));
@@ -136,9 +206,9 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
             console.log('Redirecting to:', redirectPath);
             sessionStorage.removeItem('redirectAfterLogin'); // Clear the stored path
             
-            // Use window.location for a full page reload to ensure fresh state
-            window.location.href = redirectPath;
-          }, 500);
+            // Use router.push for smooth navigation without full page reload
+            router.push(redirectPath);
+          }, 1000); // Increased delay to 1 second to ensure cookies are set
         }
       } else {
         // Register
@@ -158,11 +228,68 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
     } catch (error) {
       console.error('Auth error:', error);
       
+      let errorMessage = 'Authentication failed. Please try again.';
+      let fieldError = null;
+      
       // Handle network errors specifically
-      if (error.code === 'ERR_NETWORK') {
-        toast.error('Cannot connect to server. Please check if the backend server is running.');
+      if (error.code === 'ERR_NETWORK' || !error.response) {
+        errorMessage = 'Cannot connect to server. Please check your internet connection.';
+        setErrors(prev => ({
+          ...prev,
+          general: errorMessage
+        }));
+        toast.error(errorMessage);
       } else {
-        toast.error(error.response?.data?.message || 'Authentication failed. Please try again.');
+        // Handle HTTP errors
+        const status = error.response.status;
+        const responseData = error.response.data;
+        
+        if (status === 401) {
+          if (responseData.message?.includes('Invalid email or password')) {
+            errorMessage = 'Invalid email or password. Please check your credentials.';
+          } else if (responseData.message?.includes('Email not verified')) {
+            errorMessage = 'Please verify your email before logging in.';
+            setVerificationMessage('Please check your email and verify your account before logging in.');
+          } else {
+            errorMessage = responseData.message || 'Invalid credentials.';
+          }
+        } else if (status === 400) {
+          if (responseData.message?.includes('email')) {
+            fieldError = 'email';
+            errorMessage = 'Please enter a valid email address.';
+          } else if (responseData.message?.includes('password')) {
+            fieldError = 'password';
+            errorMessage = 'Password is required.';
+          } else if (responseData.message?.includes('User already exists')) {
+            fieldError = 'email';
+            errorMessage = 'An account with this email already exists.';
+          } else {
+            errorMessage = responseData.message || 'Invalid input. Please check your information.';
+          }
+        } else if (status === 409) {
+          fieldError = 'email';
+          errorMessage = 'An account with this email already exists.';
+        } else if (status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else {
+          errorMessage = responseData.message || 'Something went wrong. Please try again.';
+        }
+        
+        // Set errors based on whether it's a field-specific error or general error
+        if (fieldError) {
+          setErrors(prev => ({
+            ...prev,
+            [fieldError]: errorMessage,
+            general: ''
+          }));
+        } else {
+          setErrors(prev => ({
+            ...prev,
+            general: errorMessage
+          }));
+        }
+        
+        toast.error(errorMessage);
       }
     } finally {
       setLoading(false);
@@ -187,6 +314,14 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
       lastName: '',
       email: '',
       password: ''
+    });
+    // Clear all errors when switching modes
+    setErrors({
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      general: ''
     });
   };
 
@@ -278,9 +413,14 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
                       value={formData.firstName}
                       onChange={handleChange}
                       placeholder="First name"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 bg-white"
+                      className={`w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 text-gray-900 bg-white ${
+                        errors.firstName ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-900'
+                      }`}
                       required
                     />
+                    {errors.firstName && (
+                      <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="lastName" className="block text-sm font-medium text-gray-900 mb-1">
@@ -293,9 +433,14 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
                       value={formData.lastName}
                       onChange={handleChange}
                       placeholder="Last name"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 bg-white"
+                      className={`w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 text-gray-900 bg-white ${
+                        errors.lastName ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-900'
+                      }`}
                       required
                     />
+                    {errors.lastName && (
+                      <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -310,9 +455,14 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Enter your email"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 bg-white"
+                  className={`w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 text-gray-900 bg-white ${
+                    errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-900'
+                  }`}
                   required
                 />
+                {errors.email && (
+                  <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                )}
               </div>
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-1">
@@ -326,7 +476,9 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Enter your password"
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 bg-white"
+                    className={`w-full px-4 py-3 pr-12 border rounded-full focus:outline-none focus:ring-2 text-gray-900 bg-white ${
+                      errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-gray-900'
+                    }`}
                     required
                   />
                   <button
@@ -337,7 +489,16 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                )}
               </div>
+              
+              {errors.general && (
+                <div className="p-3 bg-red-50 text-red-800 rounded-lg text-sm">
+                  {errors.general}
+                </div>
+              )}
               
               {isLoginMode && (
                 <div className="flex items-center justify-between mb-4">

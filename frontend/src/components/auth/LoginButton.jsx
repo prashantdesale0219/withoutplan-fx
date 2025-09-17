@@ -40,7 +40,7 @@ const   LoginButton = () => {
           console.error('Error checking auth status:', error);
           setIsLoggedIn(false);
         }
-      }, 100); // Reduced to 100ms for faster response
+      }, 1200); // Increased delay to match login timing and ensure cookies are available
     };
     
     checkAuth();

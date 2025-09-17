@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Login from '../../components/auth/login';
-import { isAuthenticated } from '../../lib/cookieUtils';
+import { isAuthenticated, isAuthenticatedWithValidation } from '../../lib/cookieUtils';
 import api from '../../lib/api';
 
 export default function LoginPage() {
@@ -13,27 +13,17 @@ export default function LoginPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // First check with our enhanced isAuthenticated function
-        if (isAuthenticated()) {
-          console.log('User is already authenticated, redirecting to dashboard');
+        // Use simple authentication check to avoid validation loops during login transition
+        const isValidAuth = isAuthenticated();
+        
+        if (isValidAuth) {
+          console.log('User is authenticated and validated, redirecting to dashboard');
           router.push('/dashboard');
           return;
         }
         
-        // If not authenticated by token, try to verify with backend
-        try {
-          const response = await api.get('/api/auth/verify');
-          if (response.data && response.data.success) {
-            console.log('User verified by backend, redirecting to dashboard');
-            router.push('/dashboard');
-            return;
-          }
-        } catch (error) {
-          console.log('Backend verification failed, showing login form');
-        }
-        
-        // If we get here, user is not authenticated
-        console.log('User is not authenticated, showing login form');
+        // If we get here, user is not authenticated or token is invalid
+        console.log('User is not authenticated or token is invalid, showing login form');
         setChecking(false);
       } catch (error) {
         console.error('Error checking authentication:', error);
@@ -41,8 +31,8 @@ export default function LoginPage() {
       }
     };
     
-    // Add a slightly longer delay to ensure cookies are properly read
-    const timer = setTimeout(checkAuth, 800);
+    // Add moderate delay for simple authentication check
+    const timer = setTimeout(checkAuth, 1200); // Reduced since we're using simple auth check
     return () => clearTimeout(timer);
   }, [router]);
   

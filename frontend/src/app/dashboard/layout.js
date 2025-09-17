@@ -1,30 +1,65 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../../components/dashboard/Sidebar';
+import DashboardHeader from '../../components/dashboard/DashboardHeader';
 import { isAuthenticated } from '../../lib/cookieUtils';
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   
   useEffect(() => {
-    // Check if user is authenticated
-    if (!isAuthenticated()) {
-      // Store the current path to redirect back after login
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-        // Use router.push instead of window.location.href to avoid full page reload
-        router.push('/login');
-        return;
-      }
-    }
+    const checkAuth = () => {
+      // Add delay to ensure cookies are properly set after login redirect
+      setTimeout(() => {
+        const authenticated = isAuthenticated();
+        
+        if (!authenticated) {
+          console.log('User not authenticated, redirecting to login');
+          // Store the current path to redirect back after login
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+          }
+          router.push('/login');
+          return;
+        }
+        
+        console.log('User authenticated, showing dashboard');
+         setIsAuthorized(true);
+         setIsLoading(false);
+       }, 800); // 800ms delay to ensure cookies are available after login
+    };
+    
+    checkAuth();
   }, [router]);
+  
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#e7ded0] flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#26140c] mb-4"></div>
+          <p className="text-[#26140c] text-lg">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Only render dashboard if user is authorized
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-[#e7ded0] flex" suppressHydrationWarning>
-      <Sidebar />
-      <div className="flex-1 md:ml-0">
-        {children}
+    <div className="min-h-screen bg-gray-50" suppressHydrationWarning>
+      <DashboardHeader />
+      <div className="flex pt-16">
+        <Sidebar />
+        <div className="flex-1">
+          {children}
+        </div>
       </div>
     </div>
   );

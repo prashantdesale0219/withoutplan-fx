@@ -132,77 +132,120 @@ const DashboardContent = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+        <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mb-6">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-blue-600 border-t-transparent"></div>
+        </div>
+        <h2 className="text-xl font-semibold text-gray-700 mb-2">Loading Dashboard</h2>
+        <p className="text-gray-500">Please wait while we prepare your workspace...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 w-full">
+    <div className="p-6 w-full space-y-8">
       {/* Welcome Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#26140c]">
-          Welcome back, {user?.firstName}! 👋
-        </h1>
-        <p className="text-[#aa7156] mt-2">
-          Here&apos;s what&apos;s happening with your account today.
-        </p>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center">
+              <User className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Welcome back, {user?.firstName}! 👋
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Here&apos;s what&apos;s happening with your account today.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <div className="text-right">
+              <p className="text-sm text-gray-500">Last login</p>
+              <p className="font-semibold text-gray-700">{new Date().toLocaleDateString()}</p>
+            </div>
+            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-gray-600" />
+            </div>
+          </div>
+        </div>
       </div>
       
       {/* Plan and Credits Information */}
       {user && (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Award className="w-6 h-6 text-[var(--coffee)]" />
-            <h2 className="text-xl font-semibold">Your Plan</h2>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
+              <Award className="w-4 h-4 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">Your Plan & Credits</h2>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-[#f9f7f5] p-4 rounded-lg">
-              <h3 className="text-lg font-medium mb-2">Current Plan</h3>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold capitalize">{user.plan || 'Free'}</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 bg-gray-600 rounded flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900">Current Plan</h3>
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl font-bold text-gray-900 capitalize">{user.plan || 'Free'}</span>
                 <Link href="/pricing">
-                  <span className="text-xs bg-[var(--coffee)] text-white px-2 py-1 rounded hover:bg-[#3a1e12] transition-colors cursor-pointer">
+                  <span className="text-xs bg-gray-900 text-white px-2 py-1 rounded hover:bg-gray-800 transition-colors cursor-pointer font-medium">
                     Upgrade
                   </span>
                 </Link>
               </div>
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-xs text-gray-500">
                 Activated: {user.planActivatedAt ? new Date(user.planActivatedAt).toLocaleDateString() : 'N/A'}
               </p>
             </div>
             
-            <div className="bg-[#f9f7f5] p-4 rounded-lg">
-              <h3 className="text-lg font-medium mb-2">Credits</h3>
-              <div className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-[var(--coffee)]" />
-                <span className="text-2xl font-bold">{user.credits?.balance || 0}</span>
+            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 bg-gray-600 rounded flex items-center justify-center">
+                  <CreditCard className="w-3 h-3 text-white" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900">Credits</h3>
               </div>
-              <div className="mt-2 bg-gray-200 h-2 rounded-full overflow-hidden">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xl font-bold text-gray-900">{user.credits?.balance || 0}</span>
+                <span className="text-xs text-gray-500">remaining</span>
+              </div>
+              <div className="mb-2 bg-gray-200 h-2 rounded-full overflow-hidden">
                 <div 
-                  className="bg-[var(--coffee)] h-full rounded-full" 
+                  className="bg-gray-600 h-full rounded-full" 
                   style={{ width: `${Math.min(100, ((user.credits?.balance || 0) / ((user.credits?.balance || 0) + (user.credits?.imagesGenerated || 1))) * 100)}%` }}
                 ></div>
               </div>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-xs text-gray-500">
                 {user.credits?.imagesGenerated || 0} images generated
               </p>
               {user.credits?.balance <= 0 && (
-                <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded">
-                  You have run out of credits. Please upgrade your plan to continue generating images.
+                <div className="mt-2 text-xs text-red-600 bg-red-50 border border-red-200 p-2 rounded">
+                  ⚠️ You have run out of credits. Please upgrade your plan to continue generating images.
                 </div>
               )}
             </div>
             
-            <div className="bg-[#f9f7f5] p-4 rounded-lg">
-              <h3 className="text-lg font-medium mb-2">Need More?</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Upgrade your plan to get more credits and features.
+            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 bg-gray-600 rounded flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900">Need More?</h3>
+              </div>
+              <p className="text-xs text-gray-600 mb-3">
+                Upgrade your plan to get more credits and unlock premium features.
               </p>
               <Link href="/pricing">
-                <button className="w-full py-2 px-4 bg-[var(--coffee)] text-white rounded hover:bg-[#3a1e12] transition-colors font-medium">
+                <button className="w-full py-2 px-3 bg-gray-900 hover:bg-gray-800 text-white rounded transition-colors text-sm font-medium">
                   View Plans
                 </button>
               </Link>
@@ -212,53 +255,15 @@ const DashboardContent = () => {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {statCards.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                <p className={`text-sm ${
-                  stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {stat.change} from last month
-                </p>
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                {stat.icon}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Quick Actions */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-[#26140c] mb-6">
-              Quick Actions
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {quickActions.map((action, index) => (
-                <Link
-                  key={index}
-                  href={action.link}
-                  className={`${action.color} text-white p-6 rounded-lg transition-colors duration-200 block`}
-                >
-                  <div className="flex flex-col items-center text-center">
-                    {action.icon}
-                    <h3 className="text-lg font-semibold mt-3">{action.title}</h3>
-                    <p className="text-sm opacity-90 mt-1">{action.description}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
+          
 
           {/* Recent Activity */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mt-8">
+          <div className="bg-white rounded-lg shadow-sm p-6 ">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-[#26140c]">
                 Recent Activity
@@ -285,35 +290,6 @@ const DashboardContent = () => {
 
         {/* Tips & Getting Started */}
         <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-[#26140c] mb-4">
-              Getting Started
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                <div>
-                  <p className="font-medium text-gray-900">Update Profile</p>
-                  <p className="text-sm text-gray-600">Keep your profile information up to date</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                <div>
-                  <p className="font-medium text-gray-900">Manage Settings</p>
-                  <p className="text-sm text-gray-600">Configure your account preferences</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-5 h-5 border-2 border-gray-300 rounded-full mt-0.5"></div>
-                <div>
-                  <p className="font-medium text-gray-900">Explore Features</p>
-                  <p className="text-sm text-gray-600">Discover all available features</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold text-[#26140c] mb-4">
               Tips for Best Results

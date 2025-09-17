@@ -92,7 +92,7 @@ const Sidebar = () => {
       `}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-[#e7ded0]">
+          <div className="p-5 border-b border-[#e7ded0]">
             <Link href="/" className="flex items-center space-x-2">
               <img 
                 src="/assets/images/logo.png" 

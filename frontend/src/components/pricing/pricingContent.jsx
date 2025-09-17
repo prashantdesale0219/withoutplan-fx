@@ -110,10 +110,10 @@ const PricingContent = () => {
               <div className="w-full bg-gray-200 rounded-full h-2.5">
                 <div 
                   className="bg-[var(--coffee)] h-full rounded-full" 
-                  style={{ width: `${Math.min(100, ((user.credits || 0) / (user.credits + user.imagesGenerated || 1)) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (((typeof user.credits === 'object' ? user.credits.balance : user.credits) || 0) / (((typeof user.credits === 'object' ? user.credits.balance : user.credits) || 0) + ((typeof user.credits === 'object' ? user.credits.imagesGenerated : user.imagesGenerated) || 1))) * 100)}%` }}
                 ></div>
               </div>
-              <span className="text-sm font-medium">{user.credits || 0} credits left</span>
+              <span className="text-sm font-medium">{typeof user.credits === 'object' ? user.credits.balance : user.credits || 0} credits left</span>
             </div>
           </div>
         )}

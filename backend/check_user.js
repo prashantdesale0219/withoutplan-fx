@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 const User = require('./models/User');
-const TryOnTask = require('./models/TryOnTask');
+require('dotenv').config();
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/FashionX')
-  .then(() => console.log('Connected to MongoDB FashionX'))
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 async function checkData() {
@@ -20,15 +20,19 @@ async function checkData() {
       });
     }
     
-    // Check tasks
-    const tasks = await TryOnTask.find({});
-    console.log('\nTotal tasks:', tasks.length);
+    // Check for any duplicate emails or invalid users
+    const duplicateEmails = await User.aggregate([
+      { $group: { _id: '$email', count: { $sum: 1 } } },
+      { $match: { count: { $gt: 1 } } }
+    ]);
     
-    if (tasks.length > 0) {
-      console.log('Tasks found:');
-      tasks.forEach(task => {
-        console.log(`- ID: ${task._id}, Status: ${task.status}, User: ${task.userId}`);
+    if (duplicateEmails.length > 0) {
+      console.log('\nDuplicate emails found:');
+      duplicateEmails.forEach(dup => {
+        console.log(`- Email: ${dup._id}, Count: ${dup.count}`);
       });
+    } else {
+      console.log('\nNo duplicate emails found.');
     }
     
     process.exit(0);

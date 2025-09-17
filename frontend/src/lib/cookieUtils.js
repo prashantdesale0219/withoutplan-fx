@@ -101,28 +101,31 @@ export const removeCookie = (name, options = {}) => {
 };
 
 /**
- * Set auth token in cookie and localStorage
+ * Set auth token in secure cookie only
  * @param {string} token - Auth token
  */
 export const setAuthToken = (token) => {
-  // Set in cookie
+  // Set in cookie only - this is the secure approach
   setCookie('token', token, {
     expires: 7, // 7 days
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: false, // Set to false for localhost development
+    sameSite: 'strict', // Use strict for better security in development
     path: '/'
   });
   
-  // Also store in localStorage for redundancy and to ensure storage events work properly
-  try {
-    localStorage.setItem('auth_token', token);
-    console.log('Auth token stored in both cookie and localStorage');
-    
-    // Dispatch a storage event to notify other components
+  console.log('Auth token stored securely in cookie only');
+  
+  // Dispatch multiple events to notify other components immediately
+  if (typeof window !== 'undefined') {
     const storageEvent = new Event('storage');
+    const loginEvent = new Event('loginStatusChanged');
     window.dispatchEvent(storageEvent);
-  } catch (error) {
-    console.error('Failed to store auth token in localStorage:', error);
+    window.dispatchEvent(loginEvent);
+    
+    // Also dispatch after a small delay to ensure all components catch it
+    setTimeout(() => {
+      window.dispatchEvent(new Event('loginStatusChanged'));
+    }, 100);
   }
 };
 
@@ -219,7 +222,7 @@ export const clearAuthCookies = () => {
   removeAuthToken();
   removeUserData();
   
-  // Also clear any other auth-related localStorage items if they exist
+  // Also clear any existing localStorage tokens to prevent bypass attempts
   try {
     localStorage.removeItem('auth_token');
     
@@ -232,9 +235,14 @@ export const clearAuthCookies = () => {
       console.error('Error clearing image history:', historyError);
     }
     
-    console.log('Cleared all auth data from cookies and localStorage');
+    console.log('Cleared all auth data from cookies and localStorage for security');
   } catch (error) {
     console.error('Error clearing auth data from localStorage:', error);
+  }
+  
+  // Dispatch event to notify components
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('loginStatusChanged'));
   }
 };
 
@@ -243,52 +251,70 @@ export const clearAuthCookies = () => {
  * @returns {boolean|string} - True/token if authenticated, false otherwise
  */
 export const isAuthenticated = () => {
-  // Check for token in cookie first
+  // Only check for token in cookie - this is the secure source
   const token = getCookie('token');
   
-  // If not in cookie, check localStorage
-  if (!token) {
-    try {
-      const localToken = localStorage.getItem('auth_token');
-      if (localToken) {
-        console.log('Token found in localStorage, syncing to cookie');
-        // Set the token in cookie for future requests
-        setAuthToken(localToken);
-        
-        // Also update the user data if available in localStorage
-        const localUserData = localStorage.getItem('user_data');
-        if (localUserData) {
-          try {
-            const userData = JSON.parse(localUserData);
-            setUserData(userData);
-          } catch (e) {
-            console.error('Error parsing user data from localStorage:', e);
-          }
-        }
-        
-        // Dispatch event to notify components about authentication change
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('loginStatusChanged'));
-        }
-        
-        return localToken;
-      }
-    } catch (error) {
-      console.error('Error accessing localStorage:', error);
+  // If token exists in cookie, return it (backend will validate)
+  if (token) {
+    console.log('Token found in cookie, user is authenticated');
+    return token;
+  }
+  
+  // No token found in secure cookie storage
+  console.log('No authentication token found in cookie');
+  return false;
+};
+
+/**
+ * Validate token with backend server
+ * @param {string} token - Token to validate
+ * @returns {Promise<boolean>} - True if token is valid, false otherwise
+ */
+export const validateTokenWithBackend = async (token) => {
+  if (!token) return false;
+  
+  try {
+    // Use the backend API URL
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      return data.success === true;
     }
-    console.log('No authentication token found');
+    
+    // If token is invalid, don't clear cookies immediately
+    // Let the calling function decide whether to clear
+    return false;
+  } catch (error) {
+    console.error('Error validating token with backend:', error);
+    // On network error, assume token might be valid (don't clear)
+    return true;
+  }
+};
+
+/**
+ * Enhanced authentication check that validates with backend
+ * @returns {Promise<boolean>} - True if authenticated, false otherwise
+ */
+export const isAuthenticatedWithValidation = async () => {
+  const token = isAuthenticated();
+  if (!token) return false;
+  
+  // Validate token with backend
+  const isValid = await validateTokenWithBackend(token);
+  if (!isValid) {
+    console.log('Token validation failed, clearing auth data');
+    clearAuthCookies();
     return false;
   }
   
-  console.log('Token found in cookie, user is authenticated');
-  return token;
-  
-  // Commented out for now as we're not decoding on client side
-  // try {
-  //   // Decode token to check if it's valid
-  //   const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  //   return !!decoded;
-  // } catch (error) {
-  //   return false;
-  // }
+  return true;
 };

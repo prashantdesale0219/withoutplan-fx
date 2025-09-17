@@ -132,7 +132,33 @@ const userSchema = new mongoose.Schema({
         default: 0
       }
     }
-  }
+  },
+  generatedImages: [{
+    id: {
+      type: String,
+      required: false
+    },
+    originalUrl: {
+      type: String,
+      required: false
+    },
+    resultUrl: {
+      type: String,
+      required: false
+    },
+    prompt: {
+      type: String,
+      required: false
+    },
+    taskId: {
+      type: String,
+      default: null
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 }, {
   timestamps: true,
   toJSON: {

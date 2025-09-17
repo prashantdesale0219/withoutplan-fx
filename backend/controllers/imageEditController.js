@@ -174,7 +174,35 @@ exports.editImage = async (req, res) => {
     user.credits.balance -= 1;
     user.credits.totalUsed += 1;
     user.credits.imagesGenerated += 1;
-    await user.save();
+    
+    // Save generated image to user's database
+    const resultUrl = formattedData.resultUrls && formattedData.resultUrls.length > 0 
+      ? formattedData.resultUrls[0] 
+      : (formattedData.resultJson && formattedData.resultJson.resultUrls && formattedData.resultJson.resultUrls.length > 0 
+        ? formattedData.resultJson.resultUrls[0] 
+        : null);
+    
+    // Only save to database if we have a valid result URL
+    if (resultUrl && resultUrl !== 'No result URL found') {
+      const imageData = {
+        id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        originalUrl: image_url,
+        resultUrl: resultUrl,
+        prompt: prompt,
+        taskId: formattedData.taskId || null,
+        createdAt: new Date()
+      };
+      
+      // Add to user's generated images array
+      user.generatedImages.push(imageData);
+      
+      // Keep only last 50 images to prevent database bloat
+      if (user.generatedImages.length > 50) {
+        user.generatedImages = user.generatedImages.slice(-50);
+      }
+    }
+     
+     await user.save();
     
     console.log('Updated user credits:', {
       balance: user.credits.balance,
@@ -209,6 +237,16 @@ exports.editImage = async (req, res) => {
       return res.status(502).json({
         status: 'fail',
         error: 'N8N webhook connection refused. The service might be down.'
+      });
+    }
+    
+    // Handle 404 errors specifically for n8n webhook
+    if (err.response?.status === 404) {
+      console.error('N8N webhook not found (404):', err.response?.data);
+      return res.status(502).json({
+        status: 'fail',
+        error: 'Image processing service is currently unavailable. Please try again later or contact support.',
+        hint: 'The n8n workflow may need to be activated. Please ensure the workflow is running.'
       });
     }
     

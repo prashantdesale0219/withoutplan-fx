@@ -3,7 +3,7 @@ import { getAuthToken } from './cookieUtils';
 
 // Create a custom axios instance with base configuration
 const api = axios.create({
-  baseURL: 'http://localhost:5000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080',
   withCredentials: true, // Important: This enables sending cookies with requests
   headers: {
     'Content-Type': 'application/json',
@@ -11,6 +11,8 @@ const api = axios.create({
   },
   timeout: 10000 // Add timeout to prevent hanging requests
 });
+
+console.log('API Base URL:', api.defaults.baseURL);
 
 // Add a request interceptor to add auth token to every request
 api.interceptors.request.use(
@@ -24,15 +26,6 @@ api.interceptors.request.use(
       console.log('Added auth token to request headers');
     } else {
       console.log('No auth token available for request');
-      
-      // Try to get from localStorage as fallback
-      if (typeof window !== 'undefined') {
-        const localToken = localStorage.getItem('auth_token');
-        if (localToken) {
-          config.headers['Authorization'] = `Bearer ${localToken}`;
-          console.log('Added auth token from localStorage to request');
-        }
-      }
     }
     
     return config;

@@ -10,13 +10,13 @@ const nextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '5000',
+        port: process.env.NEXT_PUBLIC_BACKEND_PORT || '8080',
         pathname: '/**',
       },
       {
         protocol: 'http',
         hostname: '127.0.0.1',
-        port: '5000',
+        port: process.env.NEXT_PUBLIC_BACKEND_PORT || '8080',
         pathname: '/**',
       },
       {
@@ -36,14 +36,16 @@ const nextConfig = {
    },
    // Proxy configuration for API requests
    async rewrites() {
+     const backendUrl = process.env.NEXT_PUBLIC_API_URL || `http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || '8080'}`;
+     
      return [
        {
          source: '/uploads/:path*',
-         destination: 'http://localhost:5000/uploads/:path*',
+         destination: `${backendUrl}/uploads/:path*`,
        },
        {
          source: '/api/:path*',
-         destination: 'http://localhost:5000/api/:path*',
+         destination: `${backendUrl}/api/:path*`,
        },
      ];
    },

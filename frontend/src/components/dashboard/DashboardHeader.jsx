@@ -90,25 +90,35 @@ const DashboardHeader = () => {
 
   return (
     <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-30 shadow-sm w-full">
-      <div className="container mx-auto px-3 sm:px-4 lg:px-6 relative">
-        <div className="flex items-center justify-between h-14 sm:h-16 md:h-18 w-full">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 w-full">
           {/* Logo/Title */}
-          <div className='flex items-center flex-shrink-0'>
-            <div className='text-xl sm:text-2xl font-bold text-coffee'>
-              Dashboard
+          <div className='flex items-center flex-shrink-0 space-x-4'>
+            <div className='flex items-center space-x-3'>
+              <div className='w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center shadow-sm'>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+              </div>
+              <div className='text-2xl sm:text-3xl font-bold text-gray-900'>
+                Dashboard
+              </div>
             </div>
             {user && user.credits && (
-              <div className='ml-4 px-3 py-1 bg-gray-100 rounded-full text-sm font-medium text-gray-700 flex items-center'>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {user.credits.balance} {user.credits.balance === 1 ? 'Credit' : 'Credits'}
+              <div className='ml-6 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 flex items-center'>
+                <div className='w-5 h-5 mr-2 bg-gray-600 rounded-full flex items-center justify-center'>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <span className='font-semibold'>{typeof user.credits === 'object' && user.credits.balance !== undefined ? user.credits.balance : (typeof user.credits === 'number' ? user.credits : 0)}</span>
+                <span className='ml-1 text-gray-600'>{(typeof user.credits === 'object' && user.credits.balance !== undefined ? user.credits.balance : (typeof user.credits === 'number' ? user.credits : 0)) === 1 ? 'Credit' : 'Credits'}</span>
               </div>
             )}
           </div>
 
           {/* Mobile menu and profile buttons */}
-          <div className="md:hidden flex items-center space-x-2">
+          <div className="md:hidden flex items-center space-x-3">
             {/* Mobile Profile Button */}
              <div className="relative" ref={mobileDropdownRef}>
               <button 
@@ -116,24 +126,35 @@ const DashboardHeader = () => {
                   setIsDropdownOpen(!isDropdownOpen);
                   setIsMobileMenuOpen(false); // Close mobile menu when opening profile dropdown
                 }}
-                className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 aria-expanded={isDropdownOpen}
                 aria-haspopup="true"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                 </svg>
               </button>
               
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5 transition-all duration-200 origin-top-right">
-                  <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5">
+                  <Link href="/profile" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
                     Your Profile
                   </Link>
-                  <Link href="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                  <Link href="/settings" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
                     Settings
                   </Link>
-                  <Link href="/logout" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                  <div className="border-t border-gray-100 my-1"></div>
+                  <Link href="/logout" className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
                     Sign out
                   </Link>
                 </div>
@@ -146,9 +167,9 @@ const DashboardHeader = () => {
                 setIsMobileMenuOpen(!isMobileMenuOpen);
                 setIsDropdownOpen(false); // Close profile dropdown when opening mobile menu
               }}
-              className="p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none"
+              className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                 {isMobileMenuOpen ? (
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 ) : (
@@ -159,31 +180,46 @@ const DashboardHeader = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1 sm:space-x-2 md:space-x-4 flex-shrink-0">
-            <div className="relative">
+          <div className="hidden md:flex items-center space-x-4 flex-shrink-0">
+            <div className="relative" ref={desktopDropdownRef}>
               <button 
                 onClick={() => {
                   setIsDropdownOpen(!isDropdownOpen);
                   setIsMobileMenuOpen(false); // Close mobile menu when opening profile dropdown
                 }}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 aria-expanded={isDropdownOpen}
                 aria-haspopup="true"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                 </svg>
               </button>
               
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5 transition-all duration-200 origin-top-right">
-                  <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5">
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900">{user?.firstName || 'User'}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email || 'user@example.com'}</p>
+                  </div>
+                  <Link href="/profile" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
                     Your Profile
                   </Link>
-                  <Link href="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                  <Link href="/settings" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
                     Settings
                   </Link>
-                  <Link href="/logout" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                  <div className="border-t border-gray-100 my-1"></div>
+                  <Link href="/logout" className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
                     Sign out
                   </Link>
                 </div>
@@ -195,13 +231,30 @@ const DashboardHeader = () => {
         {/* Mobile menu */}
         <div className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${isMobileMenuOpen ? 'max-h-60 opacity-100 py-2 border-t border-gray-200' : 'max-h-0 opacity-0'}`}>
           <div className="flex flex-col space-y-2 pb-3">
-            <Link href="/profile" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+            {user && (
+              <div className="px-4 py-2 mb-2 bg-gray-50 rounded-lg mx-2">
+                <p className="text-sm font-medium text-gray-900">{user?.firstName || 'User'}</p>
+                <p className="text-xs text-gray-500 truncate">{user?.email || 'user@example.com'}</p>
+              </div>
+            )}
+            <Link href="/profile" className="flex items-center mx-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
               Your Profile
             </Link>
-            <Link href="/settings" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+            <Link href="/settings" className="flex items-center mx-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
               Settings
             </Link>
-            <Link href="/logout" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+            <div className="border-t border-gray-200 my-2 mx-4"></div>
+            <Link href="/logout" className="flex items-center mx-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
               Sign out
             </Link>
           </div>

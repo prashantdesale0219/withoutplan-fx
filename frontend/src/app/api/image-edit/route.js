@@ -32,7 +32,7 @@ export async function POST(request) {
     }
 
     // Forward the request to the backend
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
     console.log(`Forwarding to backend: ${backendUrl}/api/image-edit`);
     
     const response = await axios.post(

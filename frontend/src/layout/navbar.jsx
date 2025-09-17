@@ -48,12 +48,12 @@ const Navbar = () => {
       const token = getAuthToken();
       setIsLoggedIn(!!token);
       
-      // Force a re-check after a short delay to ensure cookies are properly read
+      // Force a re-check after a longer delay to ensure cookies are properly read after login
       setTimeout(() => {
         const tokenAfterDelay = getAuthToken();
         setIsLoggedIn(!!tokenAfterDelay);
         console.log('Login status checked in navbar:', !!tokenAfterDelay);
-      }, 100);
+      }, 1200); // Increased delay to ensure cookies are set after login redirect
     };
     
     // Check on initial load
@@ -178,17 +178,7 @@ const Navbar = () => {
           <div>
             <LoginButton />
           </div>
-          {isLoggedIn ? (
-            <Link 
-              href="/dashboard" 
-              className={`${isScrolled ? 'bg-coffee text-white' : 'bg-white text-coffee'}  px-4 py-2 rounded-md transition-colors duration-300 flex items-center space-x-2`}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-              </svg>
-              <span>Dashboard</span>
-            </Link>
-          ) : (
+          {!isLoggedIn && (
             <Link 
               href="/try-now" 
               className={`${isScrolled ? 'bg-coffee text-white' : 'bg-white text-coffee'}  px-4 py-2 rounded-md transition-colors duration-300`}
@@ -304,16 +294,6 @@ const Navbar = () => {
                 </>
               ) : (
                 <>
-                  <Link 
-                    href="/dashboard" 
-                    className="flex items-center space-x-2 text-white bg-coffee hover:bg-coffee-dark transition-colors duration-300 px-4 py-2 rounded-md"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-                    </svg>
-                    <span>Dashboard</span>
-                  </Link>
                   <button 
                     onClick={handleLogout}
                     className="flex items-center space-x-2 text-red-600 hover:text-red-700 transition-colors duration-300 px-4 py-2 rounded-md hover:bg-red-50 w-full text-left"
