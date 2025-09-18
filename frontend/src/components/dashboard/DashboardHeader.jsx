@@ -89,13 +89,13 @@ const DashboardHeader = () => {
   }, []);
 
   return (
-    <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-30 shadow-sm w-full">
+    <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50 shadow-sm w-full">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 w-full">
           {/* Logo/Title */}
           <div className='flex items-center flex-shrink-0 space-x-4'>
             <div className='flex items-center space-x-3'>
-              <div className='w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center shadow-sm'>
+              <div className='w-10 h-10 bg-coffee rounded-lg flex items-center justify-center shadow-sm'>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                 </svg>
@@ -105,14 +105,14 @@ const DashboardHeader = () => {
               </div>
             </div>
             {user && user.credits && (
-              <div className='ml-6 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 flex items-center'>
-                <div className='w-5 h-5 mr-2 bg-gray-600 rounded-full flex items-center justify-center'>
+              <div className='ml-6 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 flex items-center'>
+                <div className='w-5 h-5 mr-2 bg-black rounded-full flex items-center justify-center'>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <span className='font-semibold'>{typeof user.credits === 'object' && user.credits.balance !== undefined ? user.credits.balance : (typeof user.credits === 'number' ? user.credits : 0)}</span>
-                <span className='ml-1 text-gray-600'>{(typeof user.credits === 'object' && user.credits.balance !== undefined ? user.credits.balance : (typeof user.credits === 'number' ? user.credits : 0)) === 1 ? 'Credit' : 'Credits'}</span>
+                <span className='ml-1 text-blue-600'>{(typeof user.credits === 'object' && user.credits.balance !== undefined ? user.credits.balance : (typeof user.credits === 'number' ? user.credits : 0)) === 1 ? 'Credit' : 'Credits'}</span>
               </div>
             )}
           </div>

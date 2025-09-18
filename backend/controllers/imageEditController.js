@@ -8,7 +8,7 @@ require('dotenv').config();
  * @access  Private
  */
 exports.editImage = async (req, res) => {
-  const { prompt, image_url } = req.body;
+  const { prompt, image_url, cardId, category, item } = req.body;
   
   // Check if user has enough credits
   const user = await User.findById(req.user.id);
@@ -58,8 +58,49 @@ exports.editImage = async (req, res) => {
   }
 
   try {
-    // Get the webhook URL from environment variables
-    const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
+    // Get the appropriate webhook URL based on cardId or category
+    let n8nWebhookUrl;
+    let webhookKey = '';
+    
+    if (cardId) {
+      // Map cardId to corresponding webhook environment variable
+      webhookKey = `${cardId.toUpperCase()}_N8N_WEBHOOK`;
+      n8nWebhookUrl = process.env[webhookKey];
+      
+      if (!n8nWebhookUrl) {
+        console.log(`Webhook URL not found for card: ${cardId}, using default webhook`);
+        n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
+      } else {
+        console.log(`Using specific webhook for card ${cardId}: ${webhookKey}`);
+      }
+    } else if (category && item) {
+      // Handle category-based webhook selection
+      const categoryKey = category.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const itemKey = item.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      
+      // Try specific category-item webhook first
+      webhookKey = `${categoryKey}_${itemKey}_N8N_WEBHOOK`.toUpperCase();
+      n8nWebhookUrl = process.env[webhookKey];
+      
+      // If not found, try category-level webhook
+      if (!n8nWebhookUrl) {
+        webhookKey = `${categoryKey}_N8N_WEBHOOK`.toUpperCase();
+        n8nWebhookUrl = process.env[webhookKey];
+      }
+      
+      // If still not found, use default
+      if (!n8nWebhookUrl) {
+        console.log(`Webhook URL not found for category: ${category}, item: ${item}, using default webhook`);
+        n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
+        webhookKey = 'DEFAULT_N8N_WEBHOOK';
+      } else {
+        console.log(`Using specific webhook for category ${category}, item ${item}: ${webhookKey}`);
+      }
+    } else {
+      // Use default webhook if no cardId or category provided
+      n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
+      webhookKey = 'DEFAULT_N8N_WEBHOOK';
+    }
     
     if (!n8nWebhookUrl) {
       return res.status(500).json({ 
@@ -79,14 +120,23 @@ exports.editImage = async (req, res) => {
       });
     }
 
+    // Prepare webhook payload
+    const webhookPayload = {
+      prompt,
+      image_url,
+      cardId: cardId || null,
+      category: category || null,
+      item: item || null,
+      webhookType: cardId ? 'card' : (category && item ? 'category' : 'custom'),
+      userId: req.user.id,
+      userEmail: user.email
+    };
+    
     // Send request to n8n webhook
     console.log(`Sending request to n8n webhook: ${n8nWebhookUrl}`);
-    console.log('Request payload:', { prompt, image_url });
+    console.log('Request payload:', webhookPayload);
     
-    const response = await axios.post(n8nWebhookUrl, {
-      prompt,
-      image_url
-    }, {
+    const response = await axios.post(n8nWebhookUrl, webhookPayload, {
       timeout: 120000, // wait up to 120 seconds for n8n response
       headers: {
         'Content-Type': 'application/json'

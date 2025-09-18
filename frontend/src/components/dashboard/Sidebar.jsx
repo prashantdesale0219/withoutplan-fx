@@ -1,59 +1,40 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
+import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
-  User, 
-  LogOut, 
   Menu, 
   X,
   Home,
   Image,
-  ShoppingBag,
-  ShoppingCart,
-  Users,
-  BarChart,
-  Settings,
-  CreditCard
+  CreditCard,
+  Edit3
 } from 'lucide-react';
-import { getUserData, clearAuthCookies } from '../../lib/cookieUtils';
 
 const Sidebar = () => {
   const pathname = usePathname();
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const userData = getUserData();
-    if (userData) {
-      setUser(userData);
-    }
-  }, []);
-
-  const handleLogout = () => {
-    clearAuthCookies();
-    toast.success('Logged out successfully!');
-    router.push('/');
-  };
 
   const menuItems = [
     {
-      name: 'Dashboard',
+      name: 'Home',
       href: '/dashboard',
       icon: LayoutDashboard,
       current: pathname === '/dashboard'
     },
     {
-      name: 'Image Editor',
-      href: '/dashboard/image-editor',
+      name: 'Apps',
+      href: '/dashboard/apps',
       icon: Image,
+      current: pathname === '/dashboard/apps'
+    },
+    {
+      name: 'Create',
+      href: '/dashboard/image-editor',
+      icon: Edit3,
       current: pathname === '/dashboard/image-editor'
     },
-  
-  
     {
       name: 'Pricing',
       href: '/dashboard/pricing',
@@ -88,87 +69,56 @@ const Sidebar = () => {
       <div className={`
         fixed top-0 left-0 h-full bg-white shadow-lg z-40 transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
-        w-64 md:w-64
+        w-16 md:w-16
       `}>
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="p-5 border-b border-[#e7ded0]">
-            <Link href="/" className="flex items-center space-x-2">
-              <img 
-                src="/assets/images/logo.png" 
-                alt="FashionX" 
-                className="h-10 w-auto"
-              />
-            </Link>
-          </div>
-
-          {/* User Info */}
-          {user && (
-            <div className="p-6 border-b border-[#e7ded0]">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-[#e7ded0] rounded-full flex items-center justify-center">
-                  <User className="w-6 h-6 text-[#26140c]" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[#26140c]">
-                    {user.firstName} {user.lastName}
-                  </p>
-                  <p className="text-xs text-[#aa7156]">{user.email}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Navigation */}
-          <nav className="flex-1 p-6">
-            <ul className="space-y-2">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <li key={item.name}>
-                    <Link
-                       href={item.href}
-                       onClick={() => setIsOpen(false)}
-                       className={`
-                         flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200
-                         ${
-                           item.current
-                             ? 'bg-[#e7ded0] text-[#26140c] border-r-2 border-[#aa7156]'
-                             : 'text-[#aa7156] hover:bg-[#e7ded0] hover:text-[#26140c]'
-                         }
-                       `}
-                     >
-                      <Icon className="w-5 h-5" />
-                      <span className="font-medium">{item.name}</span>
-                    </Link>
-                  </li>
-                );
-              })}
+          <nav className="flex-1 flex flex-col justify-end p-6">
+            <ul className="space-y-3">
+              {menuItems.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`group relative flex items-center justify-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    item.current
+                      ? 'text-coffee'
+                      : 'text-gray-600 hover:coffee'
+                  }`}
+                >
+                  <item.icon
+                    className={`flex-shrink-0 h-6 w-6 ${
+                      item.current ? 'text-coffee' : 'text-gray-600 group-hover:text-coffee'
+                    }`}
+                    aria-hidden="true"
+                  />
+                  {/* Tooltip on hover */}
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    {item.name}
+                  </div>
+                </Link>
+              ))}
             </ul>
           </nav>
 
           {/* Bottom Actions */}
-          <div className="p-6 border-t border-[#e7ded0] space-y-2">
+          <div className="p-6 border-t border-gray-200">
             <Link
               href="/"
-              className="flex items-center space-x-3 px-4 py-3 rounded-lg text-[#aa7156] hover:bg-[#e7ded0] hover:text-[#26140c] transition-colors duration-200"
+              onClick={() => setIsOpen(false)}
+              className="group relative flex items-center justify-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-gray-600 hover:text-blue-600"
             >
-              <Home className="w-5 h-5" />
-              <span className="font-medium">Back to Home</span>
+              <Home className="flex-shrink-0 h-6 w-6 text-gray-600 group-hover:text-blue-600" />
+              {/* Tooltip on hover */}
+              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                Back to Home
+              </div>
             </Link>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors duration-200"
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium">Logout</span>
-            </button>
           </div>
         </div>
       </div>
 
       {/* Main content spacer for desktop */}
-      <div className="hidden md:block w-64 flex-shrink-0"></div>
+      <div className="hidden md:block w-16 flex-shrink-0"></div>
     </>
   );
 };

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { User, Shirt, Zap, Clock, CheckCircle, Award, CreditCard } from 'lucide-react';
 import DashboardErrorBoundary from '@/components/dashboard/DashboardErrorBoundary';
+import PhotoshootCards from '@/components/dashboard/PhotoshootCards';
 import { getAuthToken, getUserData } from '../../lib/cookieUtils';
 
 // Dashboard component wrapped with error boundary
@@ -156,7 +157,7 @@ const DashboardContent = () => {
                 Welcome back, {user?.firstName}! 👋
               </h1>
               <p className="text-gray-600 mt-2">
-                Here&apos;s what&apos;s happening with your account today.
+                Choose from our photoshoot styles or create custom edits.
               </p>
             </div>
           </div>
@@ -254,64 +255,91 @@ const DashboardContent = () => {
         </div>
       )}
 
-      {/* Stats Cards */}
-      
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Quick Actions */}
-        <div className="lg:col-span-2">
-          
-
-          {/* Recent Activity */}
-          <div className="bg-white rounded-lg shadow-sm p-6 ">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-[#26140c]">
-                Recent Activity
-              </h2>
-              <Link
-                href="/profile"
-                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-              >
-                View all
-              </Link>
-            </div>
-            
-            <div className="flex flex-col items-center justify-center py-8">
-              <Clock className="w-12 h-12 text-gray-400 mb-4" />
-              <p className="text-gray-600 text-center">
-                No recent activity to display.
-              </p>
-              <p className="text-gray-500 text-sm text-center mt-2">
-                Your recent activities will appear here.
-              </p>
-            </div>
-          </div>
+      {/* Quick Actions Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Quick Actions</h2>
+          <p className="text-gray-600">
+            Get started with our AI-powered image editing tools.
+          </p>
         </div>
-
-        {/* Tips & Getting Started */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-[#26140c] mb-4">
-              Tips for Best Results
-            </h2>
-            <div className="space-y-3">
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  🔒 Keep your account secure with a strong password
-                </p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Photoshoot Apps Card */}
+          <Link href="/dashboard/apps">
+            <div className="group bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 hover:border-purple-400 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-purple-600 transition-colors duration-300">Photoshoot Apps</h3>
+                  <p className="text-sm text-gray-600">20+ Pre-configured Styles</p>
+                </div>
               </div>
-              <div className="p-3 bg-green-50 rounded-lg">
-                <p className="text-sm text-green-800">
-                  ✉️ Verify your email to receive important notifications
-                </p>
-              </div>
-              <div className="p-3 bg-purple-50 rounded-lg">
-                <p className="text-sm text-purple-800">
-                  ⚙️ Check your settings regularly for new options
-                </p>
+              <p className="text-gray-700 text-sm mb-4">
+                Choose from curated photoshoot themes with specialized AI workflows for authentic Indian locations.
+              </p>
+              <div className="flex items-center text-purple-600 text-sm font-medium">
+                <span>Explore Apps</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </div>
-          </div>
+          </Link>
+          
+          {/* Custom Editor Card */}
+          <Link href="/dashboard/image-editor">
+            <div className="group bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 hover:border-blue-400 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">Custom Editor</h3>
+                  <p className="text-sm text-gray-600">AI-Powered Editing</p>
+                </div>
+              </div>
+              <p className="text-gray-700 text-sm mb-4">
+                Create custom image transformations with your own prompts and AI-powered editing capabilities.
+              </p>
+              <div className="flex items-center text-blue-600 text-sm font-medium">
+                <span>Start Editing</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </Link>
+          
+          {/* Pricing Card */}
+          <Link href="/dashboard/pricing">
+            <div className="group bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 hover:border-green-400 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
+                  <CreditCard className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-green-600 transition-colors duration-300">Upgrade Plan</h3>
+                  <p className="text-sm text-gray-600">More Credits & Features</p>
+                </div>
+              </div>
+              <p className="text-gray-700 text-sm mb-4">
+                Unlock premium features and get more credits to generate unlimited AI-powered images.
+              </p>
+              <div className="flex items-center text-green-600 text-sm font-medium">
+                <span>View Plans</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </Link>
         </div>
       </div>
     </div>
