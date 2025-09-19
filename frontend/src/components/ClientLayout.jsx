@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Navbar from "../layout/navbar";
 import Footer from "../layout/footer";
 import ErrorBoundary from "./common/ErrorBoundary";
+import { CreditProvider } from "../contexts/CreditContext";
 
 export default function ClientLayout({ children }) {
   const pathname = usePathname();
@@ -14,20 +15,25 @@ export default function ClientLayout({ children }) {
 
   return (
     <ErrorBoundary>
-      {!isDashboard && !isAuthPage && <Navbar />}
-      {children}
-      {!isDashboard && !isAuthPage && <Footer />}
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+      <CreditProvider>
+        {!isDashboard && !isAuthPage && <Navbar />}
+        {children}
+        {!isDashboard && !isAuthPage && <Footer />}
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+          limit={5}
+          containerId="main-toast-container"
+        />
+      </CreditProvider>
     </ErrorBoundary>
   );
 }

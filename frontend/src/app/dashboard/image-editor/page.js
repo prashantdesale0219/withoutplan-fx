@@ -4,12 +4,11 @@ import { useRouter } from 'next/navigation';
 
 import ImageEditor from '@/components/dashboard/ImageEditor';
 import DashboardErrorBoundary from '@/components/dashboard/DashboardErrorBoundary';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+// ToastContainer is handled in ClientLayout
 import { getAuthToken, isAuthenticated as checkIsAuthenticated } from '@/lib/cookieUtils';
 import { Loader } from 'lucide-react';
 import api from '@/lib/api';
-import PhotoshootCards from '@/components/dashboard/PhotoshootCards';
+import Apps from '../apps/page';
 
 const ImageEditorPage = () => {
   const router = useRouter();
@@ -54,14 +53,14 @@ const ImageEditorPage = () => {
         ) : (
           <div>
            
-           <div className='flex flex-row justify-between items-center max-w-7xl'>
-            <div className='w-lg'><ImageEditor/></div>
-            <div className='w-7xl'><PhotoshootCards/></div>
+           <div className=' items-center max-w-8xl'>
+            <div className='w-full'><ImageEditor/></div>
+            <div className='w-full'><Apps/></div>
              
             </div>
           </div>
         )}
-        <ToastContainer position="bottom-right" autoClose={5000} />
+        {/* ToastContainer is handled in ClientLayout */}
       </div>
     </DashboardErrorBoundary>
   );

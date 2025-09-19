@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getUserData } from '../../lib/cookieUtils';
+import { useCredits } from '../../contexts/CreditContext';
 
 const DashboardHeader = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -9,6 +10,7 @@ const DashboardHeader = () => {
   const [user, setUser] = useState(null);
   const mobileDropdownRef = useRef(null);
   const desktopDropdownRef = useRef(null);
+  const { credits, loading: creditsLoading } = useCredits();
   
   useEffect(() => {
     // Get user data from both cookie and localStorage
@@ -104,15 +106,15 @@ const DashboardHeader = () => {
                 Dashboard
               </div>
             </div>
-            {user && user.credits && (
+            {!creditsLoading && credits !== null && (
               <div className='ml-6 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm font-medium text-blue-700 flex items-center'>
                 <div className='w-5 h-5 mr-2 bg-black rounded-full flex items-center justify-center'>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span className='font-semibold'>{typeof user.credits === 'object' && user.credits.balance !== undefined ? user.credits.balance : (typeof user.credits === 'number' ? user.credits : 0)}</span>
-                <span className='ml-1 text-blue-600'>{(typeof user.credits === 'object' && user.credits.balance !== undefined ? user.credits.balance : (typeof user.credits === 'number' ? user.credits : 0)) === 1 ? 'Credit' : 'Credits'}</span>
+                <span className='font-semibold'>{credits}</span>
+                <span className='ml-1 text-blue-600'>{credits === 1 ? 'Credit' : 'Credits'}</span>
               </div>
             )}
           </div>

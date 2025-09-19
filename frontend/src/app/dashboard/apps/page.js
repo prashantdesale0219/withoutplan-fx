@@ -1,5 +1,6 @@
 'use client';
-  import React from 'react';
+import React from 'react';
+import Image from 'next/image';
 import DashboardErrorBoundary from '@/components/dashboard/DashboardErrorBoundary';
 import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
@@ -12,71 +13,71 @@ const AppsContent = () => {
       title: "Product Type",
       description: "What the outfit is",
       items: [
-        { name: "Sari", icon: "👘", gradient: "from-pink-400 to-rose-500" },
-        { name: "Lehenga", icon: "👗", gradient: "from-purple-400 to-pink-500" },
-        { name: "Kurta Set", icon: "🥻", gradient: "from-orange-400 to-red-500" },
-        { name: "Western Dress", icon: "👗", gradient: "from-blue-400 to-purple-500" },
-        { name: "Top", icon: "👚", gradient: "from-green-400 to-blue-500" },
-        { name: "Jeans", icon: "👖", gradient: "from-indigo-400 to-blue-500" },
-        { name: "Mens Shirt", icon: "👔", gradient: "from-gray-400 to-gray-600" },
-        { name: "Kids Wear", icon: "👶", gradient: "from-yellow-400 to-orange-500" },
-        { name: "Lingerie", icon: "🩱", gradient: "from-pink-400 to-red-500" },
-        { name: "Swimwear", icon: "🩱", gradient: "from-cyan-400 to-blue-500" }
+        { name: "Sari", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Lehenga", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Kurta Set", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Western Dress", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Top", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Jeans", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Mens Shirt", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Kids Wear", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Lingerie", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Swimwear", image: "/assets/images/sunset-beach.jpg" }
       ]
     },
     {
       title: "Scene / Location / Ambience",
       description: "Setting and environment",
       items: [
-        { name: "Taj-inspired Palatial", icon: "🏛️", gradient: "from-amber-400 to-orange-500" },
-        { name: "Luxury Hotel Suite", icon: "🏨", gradient: "from-purple-400 to-pink-500" },
-        { name: "Urban Street", icon: "🏙️", gradient: "from-blue-400 to-cyan-500" },
-        { name: "Cafe", icon: "☕", gradient: "from-brown-400 to-amber-500" },
-        { name: "Beach", icon: "🏖️", gradient: "from-teal-400 to-blue-500" },
-        { name: "Rooftop Sunset", icon: "🌅", gradient: "from-orange-400 to-red-500" },
-        { name: "Studio White", icon: "📸", gradient: "from-gray-300 to-gray-500" },
-        { name: "Minimal Editorial", icon: "📖", gradient: "from-slate-400 to-gray-500" },
-        { name: "Runway", icon: "🚶", gradient: "from-black to-gray-700" },
-        { name: "Home Lifestyle", icon: "🏠", gradient: "from-green-400 to-emerald-500" }
+        { name: "Taj-inspired Palatial", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Luxury Hotel Suite", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Urban Street", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Cafe", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Beach", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Rooftop Sunset", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Studio White", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Minimal Editorial", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Runway", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Home Lifestyle", image: "/assets/images/sunset-beach.jpg" }
       ]
     },
     {
       title: "Shot Style / Use Case",
       description: "Photography style and purpose",
       items: [
-        { name: "Hero Banner", icon: "🎯", gradient: "from-red-400 to-pink-500" },
-        { name: "Lookbook Full-body", icon: "👤", gradient: "from-purple-400 to-indigo-500" },
-        { name: "3/4 Crop", icon: "✂️", gradient: "from-blue-400 to-cyan-500" },
-        { name: "Flatlay", icon: "📐", gradient: "from-green-400 to-teal-500" },
-        { name: "Close-up Fabric Detail", icon: "🔍", gradient: "from-yellow-400 to-orange-500" },
-        { name: "Mannequin/Catalog", icon: "🏷️", gradient: "from-gray-400 to-slate-500" },
-        { name: "360° Turntable Set", icon: "🔄", gradient: "from-cyan-400 to-blue-500" },
-        { name: "Thumbnail", icon: "🖼️", gradient: "from-pink-400 to-rose-500" }
+        { name: "Hero Banner", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Lookbook Full-body", image: "/assets/images/sunset-beach.jpg" },
+        { name: "3/4 Crop", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Flatlay", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Close-up Fabric Detail", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Mannequin/Catalog", image: "/assets/images/sunset-beach.jpg" },
+        { name: "360° Turntable Set", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Thumbnail", image: "/assets/images/sunset-beach.jpg" }
       ]
     },
     {
       title: "Mood / Genre / Finishes",
       description: "Visual style and aesthetic",
       items: [
-        { name: "Cinematic", icon: "🎬", gradient: "from-black to-gray-800" },
-        { name: "High-fashion Editorial", icon: "✨", gradient: "from-purple-400 to-pink-500" },
-        { name: "Clean Ecommerce", icon: "🛒", gradient: "from-blue-400 to-cyan-500" },
-        { name: "Vintage Film", icon: "📷", gradient: "from-amber-400 to-orange-500" },
-        { name: "Vivid Commercial", icon: "🌈", gradient: "from-red-400 to-pink-500" },
-        { name: "Matte Editorial", icon: "📰", gradient: "from-gray-400 to-slate-500" },
-        { name: "High-gloss Retouch", icon: "💎", gradient: "from-cyan-400 to-blue-500" }
+        { name: "Cinematic", image: "/assets/images/sunset-beach.jpg" },
+        { name: "High-fashion Editorial", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Clean Ecommerce", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Vintage Film", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Vivid Commercial", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Matte Editorial", image: "/assets/images/sunset-beach.jpg" },
+        { name: "High-gloss Retouch", image: "/assets/images/sunset-beach.jpg" }
       ]
     },
     {
       title: "Target Channel Presets",
       description: "Platform-specific optimization",
       items: [
-        { name: "Amazon/Flipkart Listing", icon: "📦", gradient: "from-orange-400 to-red-500" },
-        { name: "Shopify PDP", icon: "🛍️", gradient: "from-green-400 to-emerald-500" },
-        { name: "Instagram Feed", icon: "📱", gradient: "from-pink-400 to-purple-500" },
-        { name: "Instagram Reels Cover", icon: "🎥", gradient: "from-purple-400 to-indigo-500" },
-        { name: "Facebook Ad", icon: "📢", gradient: "from-blue-400 to-cyan-500" },
-        { name: "Print Catalogue", icon: "📖", gradient: "from-gray-400 to-slate-500" }
+        { name: "Amazon/Flipkart Listing", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Shopify PDP", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Instagram Feed", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Instagram Reels Cover", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Facebook Ad", image: "/assets/images/sunset-beach.jpg" },
+        { name: "Print Catalogue", image: "/assets/images/sunset-beach.jpg" }
       ]
     }
   ];
@@ -125,40 +126,37 @@ const AppsContent = () => {
                 {category.items.map((item, itemIndex) => (
                   <div
                     key={itemIndex}
-                    className="group relative bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer hover:ring-2 hover:ring-gray-400 h-64"
+                    className="group relative bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer hover:ring-2 hover:ring-gray-400 h-80"
                     onClick={() => handleCardClick(category.title, item)}
                   >
                     {/* Thumbnail Image */}
                     <div className="relative h-full overflow-hidden">
-                      {/* Thumbnail with gradient background and icon */}
-                       <div className={`w-full h-full bg-gradient-to-br ${item.gradient} flex items-center justify-center text-white relative`}>
-                         {/* Background pattern */}
-                         <div className="absolute inset-0 opacity-20">
-                           <div className="w-full h-full" style={{
-                             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                             backgroundSize: '30px 30px'
-                           }} />
-                         </div>
+                      {/* Dynamic sunset beach background image */}
+                       <div className="w-full h-full relative">
+                         {/* Background image with Next.js Image component */}
+                          <Image 
+                            src={item.image || "/assets/images/sunset-beach.jpg"} 
+                            alt={`${item.name} - ${category.title}`}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                            priority={categoryIndex === 0 && itemIndex < 4}
+                            placeholder="blur"
+                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                          />
                          
-                         {/* Main icon */}
-                         <div className="text-8xl drop-shadow-lg">
-                           {item.icon}
-                         </div>
+                         {/* Dark overlay for better text readability */}
+                         <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors duration-300" />
                          
                          {/* Category label */}
                          <div className="absolute bottom-4 left-4 right-4">
-                           <div className="bg-black/40 backdrop-blur-sm rounded-lg px-3 py-2">
+                           <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 group-hover:bg-black/70 transition-colors duration-300">
                              <h4 className="text-white font-semibold text-sm truncate">{item.name}</h4>
+                             <p className="text-white/80 text-xs mt-1 truncate">{category.title}</p>
                            </div>
                          </div>
                        </div>
-                      
-                      {/* Icon Overlay */}
-                      <div className="absolute top-3 left-3">
-                        <div className="w-8 h-8 bg-black/60 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                          <div className="text-white text-sm">{item.icon}</div>
-                        </div>
-                      </div>
+
                       
                       {/* Generate Button */}
                       <div className="absolute inset-x-3 bottom-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">

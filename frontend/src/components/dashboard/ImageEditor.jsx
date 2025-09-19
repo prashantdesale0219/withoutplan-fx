@@ -7,8 +7,7 @@ import ImageHistory from './ImageHistory';
 import api from '@/lib/api';
 import Link from 'next/link';
 import { getUserData, setUserData, getAuthToken } from '@/lib/cookieUtils';
-import { getCardById } from '@/data/photoshootCards';
-
+import { useCredits } from '../../contexts/CreditContext';
 const ImageEditor = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -22,8 +21,8 @@ const ImageEditor = () => {
   const [resultImage, setResultImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [credits, setCredits] = useState(null);
   const [showCreditWarning, setShowCreditWarning] = useState(false);
+  const { credits, loading: creditsLoading, hasEnoughCredits, shouldShowWarning, deductCredits, updateCredits } = useCredits();
   
   useEffect(() => {
     // Load selected card ONLY from URL params (not localStorage for custom editor)
@@ -32,14 +31,7 @@ const ImageEditor = () => {
     const item = searchParams.get('item');
     const type = searchParams.get('type');
     
-    if (cardId) {
-      const card = getCardById(cardId);
-      if (card) {
-        setSelectedCard(card);
-        // For card-based editing, set a minimal prompt (will be handled by workflow)
-        setPrompt('Transform this image');
-      }
-    } else if (type === 'category' && category && item) {
+    if (type === 'category' && category && item) {
        // Handle category-based selection
        const categoryName = category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
        const itemName = item.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -80,24 +72,9 @@ const ImageEditor = () => {
       localStorage.removeItem('selectedPhotoshootCard');
     }
 
-    // Get user data and check credits
-    const userData = getUserData();
-    if (userData && userData.credits !== undefined) {
-      // Handle both object and number formats for credits
-      let creditsBalance;
-      if (typeof userData.credits === 'object' && userData.credits.balance !== undefined) {
-        creditsBalance = userData.credits.balance;
-      } else if (typeof userData.credits === 'number') {
-        creditsBalance = userData.credits;
-      } else {
-        creditsBalance = 0;
-      }
-      
-      // Ensure we only set a number, not an object
-      setCredits(typeof creditsBalance === 'number' ? creditsBalance : 0);
-      if (creditsBalance <= 3) {
-        setShowCreditWarning(true);
-      }
+    // Check credit warning using context
+    if (shouldShowWarning()) {
+      setShowCreditWarning(true);
     }
   }, []);
 
@@ -214,7 +191,7 @@ const ImageEditor = () => {
     }
     
     // Check if user has enough credits
-    if (credits !== null && credits <= 0) {
+    if (!hasEnoughCredits()) {
       toast.error('You have no credits left. Please upgrade your plan to continue.');
       setError('Insufficient credits. Please upgrade your plan to continue generating images.');
       return;
@@ -298,6 +275,14 @@ const ImageEditor = () => {
         if (resultImageUrl) {
           setResultImage(resultImageUrl);
           toast.success('Image edited successfully!');
+          
+          // Update credits after successful generation
+          if (data.credits && data.credits.remaining !== undefined) {
+            updateCredits(data.credits.remaining);
+          } else {
+            // Fallback: deduct 1 credit if no specific credit info in response
+            deductCredits(1);
+          }
         } else {
           throw new Error('No image URL in response');
         }
@@ -315,341 +300,346 @@ const ImageEditor = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-        {/* Selected Card Header */}
-        {selectedCard && (
-          <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              <button
-                onClick={() => router.push('/dashboard/apps')}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">Back to Apps</span>
-              </button>
-            </div>
+    <div className="w-full h-screen flex flex-col bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
             
-            <div className={`bg-gradient-to-r ${selectedCard.gradient} rounded-2xl p-6 text-white mb-6`}>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center text-2xl">
-                  {selectedCard.icon}
-                </div>
-                <div className="flex-1">
-                  <h1 className="text-3xl font-bold mb-2">{selectedCard.title}</h1>
-                  <p className="text-white/90 mb-3">{selectedCard.description}</p>
-                  {selectedCard.category && (
-                    <div className="flex items-center gap-4 text-sm text-white/80">
-                      <div className="flex items-center gap-1">
-                        <Palette className="w-4 h-4" />
-                        <span>{selectedCard.category}</span>
-                      </div>
-                    </div>
-                  )}
-                  {selectedCard.location && selectedCard.style && (
-                    <div className="flex items-center gap-4 text-sm text-white/80">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{selectedCard.location}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Palette className="w-4 h-4" />
-                        <span>{selectedCard.style}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+                <ImageIcon className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-xl font-bold text-gray-900">
+                {selectedCard ? `${selectedCard.title} Editor` : 'AI Image Editor'}
+              </h1>
+            </div>
+          </div>
+          
+          
+        </div>
+        
+        {showCreditWarning && (
+          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-amber-800 text-sm">Low Credits Warning</h3>
+              <p className="text-xs text-amber-700 mt-1">
+                You're running low on credits. Each image generation uses 1 credit.
+                <Link href="/dashboard/billing" className="font-medium text-amber-800 hover:text-amber-900 ml-1">
+                  Upgrade your plan
+                </Link> to continue generating images.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Selected Card Info Banner */}
+        {selectedCard && (
+          <div className={`mt-4 bg-gradient-to-r ${selectedCard.gradient} rounded-lg p-4 text-white`}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center text-lg">
+                {selectedCard.icon}
+              </div>
+              <div className="flex-1">
+                <h2 className="font-semibold text-white">{selectedCard.title}</h2>
+                <p className="text-white/90 text-sm">{selectedCard.description}</p>
+                {selectedCard.category && (
+                  <div className="flex items-center gap-1 text-xs text-white/80 mt-1">
+                    <Palette className="w-3 h-3" />
+                    <span>{selectedCard.category}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
-        
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          {/* Back button for custom editor */}
-          {!selectedCard && (
-            <div className="mb-4">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">Back to Dashboard</span>
-              </button>
-            </div>
-          )}
-          
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
-                <ImageIcon className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-black">
-                  {selectedCard ? `Upload Image for ${selectedCard.title}` : 'Custom AI Image Editor'}
-                </h2>
-                <p className="text-gray-600 text-sm mt-1">
-                  {selectedCard 
-                    ? `Upload your image and we'll transform it with ${selectedCard.title} ${selectedCard.category ? `(${selectedCard.category})` : ''} style.`
-                    : 'Upload your image and describe how you want to transform it with custom prompts'
-                  }
-                </p>
-              </div>
-            </div>
-        
-            {credits !== null && (
-              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg">
-                <CreditCard className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">{credits} {credits === 1 ? 'credit' : 'credits'} remaining</span>
-              </div>
-            )}
+      </div>
+
+      {/* Main Content - Two Column Layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Panel - Input/Upload */}
+        <div className="w-1/2 bg-white border-r border-gray-200 flex flex-col">
+          <div className="p-6 border-b border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              {selectedCard ? `Upload Image for ${selectedCard.title}` : 'Upload & Transform'}
+            </h2>
+            <p className="text-sm text-gray-600">
+              {selectedCard 
+                ? `Upload your image and we'll transform it with ${selectedCard.title} style.`
+                : 'Upload your image and describe how you want to transform it'
+              }
+            </p>
           </div>
-        
-          {showCreditWarning && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
-                <div>
-                  <h3 className="font-medium text-yellow-800">Low Credits Warning</h3>
-                  <p className="text-sm text-yellow-700 mb-2">
-                    You're running low on credits. Upgrade your plan to continue generating images without interruption.
-                  </p>
-                  <Link href="/pricing">
-                    <button className="bg-gray-900 hover:bg-gray-800 text-white text-sm px-3 py-1 rounded transition-colors">
-                      Upgrade Plan
-                    </button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
           
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Upload Image or Enter URL
-              </label>
-              
-              {/* Upload Area */}
-              <div 
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 mb-4 hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer"
-                onClick={handleUploadAreaClick}
-              >
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Upload className="w-8 h-8 text-gray-400" />
+          <div className="flex-1 overflow-y-auto p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Upload Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-800 mb-3">
+                  Upload Image or Enter URL
+                </label>
+                
+                {/* Upload Area */}
+                <div 
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={handleUploadAreaClick}
+                >
+                  <div className="text-center">
+                    <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <h3 className="text-sm font-medium text-gray-900 mb-1">
+                      {selectedFile ? selectedFile.name : 'Upload Image or Drag & Drop'}
+                    </h3>
+                    <p className="text-gray-500 text-xs">
+                      PNG, JPG, WebP (max 10MB)
+                    </p>
+                    <input
+                      id="file-upload"
+                      name="file-upload"
+                      type="file"
+                      className="sr-only"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      disabled={loading || uploading}
+                    />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {selectedFile ? selectedFile.name : 'Upload Image or Drag & Drop'}
-                  </h3>
-                  <p className="text-gray-500 text-sm">
-                    PNG, JPG, WebP (max 10MB)
-                  </p>
-                  <input
-                    id="file-upload"
-                    name="file-upload"
-                    type="file"
-                    className="sr-only"
-                    accept="image/*"
-                    onChange={handleFileSelect}
-                    disabled={loading || uploading}
-                  />
                 </div>
+                
+                {selectedFile && !uploadedImageUrl && (
+                  <button
+                    type="button"
+                    onClick={handleFileUpload}
+                    disabled={uploading || loading}
+                    className="w-full mb-4 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader className="animate-spin w-4 h-4" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4" />
+                        Upload Image
+                      </>
+                    )}
+                  </button>
+                )}
+                
+                <div className="text-center text-sm text-gray-500 mb-4">or</div>
+                
+                <input
+                  type="url"
+                  id="imageUrl"
+                  value={imageUrl}
+                  onChange={(e) => {
+                    setImageUrl(e.target.value);
+                    if (e.target.value.trim()) {
+                      setSelectedFile(null);
+                      setUploadedImageUrl('');
+                      if (previewUrl) {
+                        URL.revokeObjectURL(previewUrl);
+                        setPreviewUrl('');
+                      }
+                    }
+                  }}
+                  placeholder="Or paste image URL here..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  disabled={loading || uploading}
+                />
               </div>
               
-              {selectedFile && !uploadedImageUrl && (
+              {/* Prompt Input - Only show for custom editing */}
+              {!selectedCard && (
+                <div>
+                  <label htmlFor="prompt" className="block text-sm font-medium text-gray-800 mb-3">
+                    Transformation Prompt
+                  </label>
+                  <textarea
+                    id="prompt"
+                    rows={4}
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Describe how you want to transform your image..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-500 resize-none"
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-gray-600 mt-2">
+                    💡 Tip: Be specific about the style, mood, or changes you want
+                  </p>
+                </div>
+              )}
+
+              {/* Card-specific prompt info */}
+              {selectedCard && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <Sparkles className="w-4 h-4 text-blue-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-blue-800 font-medium">
+                        AI Workflow Active
+                      </p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        No custom prompt needed - Our AI will automatically apply {selectedCard.title} transformation
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Submit Button */}
+              <div className="pt-4">
                 <button
-                  type="button"
-                  onClick={handleFileUpload}
-                  disabled={uploading || loading}
-                  className="w-full mb-4 bg-gray-900 hover:bg-gray-800 text-white py-3 px-4 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  type="submit"
+                  disabled={loading || uploading || (!uploadedImageUrl && !imageUrl.trim())}
+                  className="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {uploading ? (
+                  {loading ? (
                     <>
-                      <Loader className="animate-spin w-4 h-4" />
+                      <Loader className="w-5 h-5 mr-3 animate-spin" />
+                      Generating...
+                    </>
+                  ) : uploading ? (
+                    <>
+                      <Loader className="w-5 h-5 mr-3 animate-spin" />
                       Uploading...
                     </>
                   ) : (
                     <>
-                      <Upload className="w-4 h-4" />
-                      Upload Image
+                      <Sparkles className="w-5 h-5 mr-3" />
+                      {selectedCard ? `Transform with ${selectedCard.title}` : 'Generate Image'}
                     </>
                   )}
                 </button>
-              )}
-              
-              <div className="text-center text-sm text-gray-500 mb-4">or</div>
-              
-              <input
-                type="url"
-                id="imageUrl"
-                value={imageUrl}
-                onChange={(e) => {
-                  setImageUrl(e.target.value);
-                  if (e.target.value.trim()) {
-                    setSelectedFile(null);
-                    setUploadedImageUrl('');
-                    if (previewUrl) {
-                      URL.revokeObjectURL(previewUrl);
-                      setPreviewUrl('');
-                    }
-                  }
-                }}
-                placeholder="Or paste image URL here..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
-                disabled={loading || uploading}
-              />
-            </div>
-            
-            {/* Prompt Input - Only show for custom editing (when no card is selected) */}
-            {!selectedCard && (
-              <div>
-                <label htmlFor="prompt" className="block text-sm font-medium text-gray-700 mb-2">
-                  Transformation Prompt
-                </label>
-                <input
-                  type="text"
-                  id="prompt"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe how you want to transform your image..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
-                  disabled={loading}
-                />
-                <p className="text-sm text-gray-500 mt-1">Example: "Make it futuristic", "Add sunset lighting", "Convert to cartoon style"</p>
+                <p className="text-center text-gray-500 text-sm mt-2">
+                  This will use 1 credit
+                </p>
               </div>
-            )}
-            
-            {/* Card Info - Show when card is selected */}
-            {selectedCard && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${selectedCard.gradient} flex items-center justify-center text-white text-sm`}>
-                    {selectedCard.icon}
-                  </div>
-                  <div>
-                  <h3 className="font-semibold text-gray-900">{selectedCard.title}</h3>
-                  <p className="text-sm text-gray-600">
-                    {selectedCard.category || (selectedCard.style && selectedCard.location ? `${selectedCard.style} • ${selectedCard.location}` : 'AI-powered transformation')}
-                  </p>
-                </div>
-                </div>
-                <div className="bg-white rounded-md p-3 border border-gray-200">
-                  <p className="text-sm text-gray-700">
-                    <strong>✨ Pre-configured Workflow:</strong> This photoshoot style has a specialized AI workflow with pre-set prompts and styling. Just upload your image and the magic will happen automatically!
-                  </p>
-                  <div className="mt-2 text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded inline-block">
-                    🎯 No custom prompt needed - Workflow handles everything
+              
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5" />
+                    <div>
+                      <h3 className="font-medium text-red-800 text-sm">Error</h3>
+                      <p className="text-red-700 text-sm">{error}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-            
-            <button
-              type="submit"
-              disabled={loading || uploading || (!uploadedImageUrl && !imageUrl.trim())}
-              className={`w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2 ${(loading || uploading || (!uploadedImageUrl && !imageUrl.trim())) ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {loading ? (
-                <>
-                  <Loader className="animate-spin w-5 h-5" />
-                  Generating...
-                </>
-              ) : uploading ? (
-                <>
-                  <Loader className="animate-spin w-5 h-5" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5" />
-                  {selectedCard ? `Transform with ${selectedCard.title}` : 'Generate Image'}
-                </>
               )}
-            </button>
-            <p className="text-center text-gray-500 text-sm mt-2">
-              This will use 1 credit
+            </form>
+          </div>
+        </div>
+
+        {/* Right Panel - Preview/Result */}
+        <div className="w-1/2 bg-gray-50 flex flex-col">
+          <div className="p-6 border-b border-gray-200 bg-white">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              {resultImage ? 'Generated Result' : 'Preview'}
+            </h2>
+            <p className="text-sm text-gray-600">
+              {resultImage ? 'Your AI-generated image' : 'Upload an image to see preview and results here'}
             </p>
-          </form>
+          </div>
           
-          {/* Preview Area */}
-          {(previewUrl || uploadedImageUrl || resultImage) && (
-            <div className="mt-8">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {resultImage ? 'Generated Result' : 'Preview'}
-              </h3>
-              <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 min-h-[400px] flex items-center justify-center">
-                <img
-                  src={resultImage || uploadedImageUrl || previewUrl}
-                  alt={resultImage ? 'Generated result' : 'Preview'}
-                  className="max-w-full max-h-[500px] object-contain rounded-lg shadow-sm"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/assets/images/image-error.png';
-                  }}
-                />
-              </div>
-              
-              {resultImage && (
-                <div className="mt-4 flex gap-3">
-                  <a 
-                    href={resultImage} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-300"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Open Full Size
-                  </a>
-                  <button
-                    onClick={() => {
-                      const downloadImage = async () => {
-                        try {
-                          const response = await fetch(resultImage);
-                          const blob = await response.blob();
-                          const blobUrl = URL.createObjectURL(blob);
-                          
-                          const link = document.createElement('a');
-                          link.href = blobUrl;
-                          link.download = `generated-image-${Date.now()}.png`;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          
-                          URL.revokeObjectURL(blobUrl);
-                          toast.success('Image download started');
-                        } catch (err) {
-                          console.error('Error downloading image:', err);
-                          toast.error('Failed to download image');
-                        }
-                      };
-                      downloadImage();
-                    }}
-                    className="flex-1 bg-gray-900 hover:bg-gray-800 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {error && (
-            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
-                <div>
-                  <h3 className="font-medium text-red-800">Error</h3>
-                  <p className="text-red-700 text-sm">{error}</p>
+          <div className="flex-1 overflow-y-auto p-6">
+            {loading && (
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                  <Loader className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
+                  <p className="text-gray-600 text-lg">Generating your image...</p>
+                  <p className="text-gray-500 text-sm mt-2">This may take a few moments</p>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+            
+            {!loading && !previewUrl && !uploadedImageUrl && !resultImage && (
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center max-w-md">
+                  <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <ImageIcon className="w-12 h-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No image uploaded yet</h3>
+                  <p className="text-gray-500 text-sm">
+                    Upload an image or enter an image URL in the left panel to get started.
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {(previewUrl || uploadedImageUrl || resultImage) && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                    <img
+                      src={resultImage || uploadedImageUrl || previewUrl}
+                      alt={resultImage ? 'Generated result' : 'Preview'}
+                      className="max-w-full max-h-full object-contain"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/assets/images/image-error.png';
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                {resultImage && (
+                  <div className="flex flex-wrap gap-3">
+                    <a 
+                      href={resultImage} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Open Full Size
+                    </a>
+                    <button
+                      onClick={() => {
+                        const downloadImage = async () => {
+                          try {
+                            const response = await fetch(resultImage);
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = `generated-image-${Date.now()}.png`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            window.URL.revokeObjectURL(url);
+                            toast.success('Image download started!');
+                          } catch (error) {
+                            console.error('Download error:', error);
+                            toast.error('Download failed. Please try the direct link.');
+                          }
+                        };
+                        downloadImage();
+                      }}
+                      className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </button>
+                  </div>
+                )}
+                
+                {resultImage && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-700">
+                      ✅ Image generated successfully! You can view it above, download it, or open it in full size.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-        
-        {/* Image History Section */}
-        <div className="mt-12">
-          <ImageHistory />
-        </div>
+      </div>
     </div>
   );
 };

@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import DashboardHeader from '../../components/dashboard/DashboardHeader';
 import Sidebar from '../../components/dashboard/Sidebar';
 import DashboardErrorBoundary from '../../components/dashboard/DashboardErrorBoundary';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+// ToastContainer is handled in ClientLayout
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -67,7 +66,7 @@ export default function Dashboard() {
             {renderContent()}
           </main>
         </div>
-        <ToastContainer position="bottom-right" autoClose={5000} />
+        {/* ToastContainer is handled in ClientLayout */}
       </div>
     </DashboardErrorBoundary>
   );

@@ -18,8 +18,8 @@ router.post('/image', protect, uploadConfigs.singleImage, asyncHandler(async (re
     });
   }
 
-  // Generate the full URL for the uploaded file using environment variable
-  const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+  // Generate the full URL for the uploaded file using CLIENT_URL from environment
+  const baseUrl = process.env.CLIENT_URL || process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
   const imageUrl = `${baseUrl}/uploads/${path.relative('./uploads', req.file.path).replace(/\\/g, '/')}`;
 
   res.status(200).json({
@@ -31,6 +31,37 @@ router.post('/image', protect, uploadConfigs.singleImage, asyncHandler(async (re
       size: req.file.size,
       mimetype: req.file.mimetype,
       url: imageUrl,
+      path: req.file.path
+    }
+  });
+}));
+
+/**
+ * @route   POST /api/upload/audio
+ * @desc    Upload audio for video generation
+ * @access  Private
+ */
+router.post('/audio', protect, uploadConfigs.singleAudio, asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({
+      success: false,
+      error: 'No audio file uploaded'
+    });
+  }
+
+  // Generate the full URL for the uploaded file using CLIENT_URL from environment
+  const baseUrl = process.env.CLIENT_URL || process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+  const audioUrl = `${baseUrl}/uploads/${path.relative('./uploads', req.file.path).replace(/\\/g, '/')}`;
+
+  res.status(200).json({
+    success: true,
+    message: 'Audio uploaded successfully',
+    data: {
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype,
+      url: audioUrl,
       path: req.file.path
     }
   });

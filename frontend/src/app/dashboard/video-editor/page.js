@@ -3,13 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import DashboardErrorBoundary from '@/components/dashboard/DashboardErrorBoundary';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+// ToastContainer is handled in ClientLayout
 import { getAuthToken, isAuthenticated as checkIsAuthenticated } from '@/lib/cookieUtils';
 import { Loader } from 'lucide-react';
 import api from '@/lib/api';
-import PhotoshootCards from '@/components/dashboard/PhotoshootCards';
 import VideoEditor from '@/components/dashboard/VideoEditor';
+import Apps from '../apps/page';
 
 const VideoEditorPage = () => {
   const router = useRouter();
@@ -54,14 +53,14 @@ const VideoEditorPage = () => {
         ) : (
           <div>
            
-           <div className='flex flex-row justify-between items-center max-w-7xl'>
-            <div className='w-lg'><VideoEditor/></div>
-            <div className='w-7xl'><PhotoshootCards/></div>
+           <div className='f items-center max-w-8xl'>
+            <div className='w-full'><VideoEditor/></div>
+            <div className='w-full'><Apps/></div>
              
             </div>
           </div>
         )}
-        <ToastContainer position="bottom-right" autoClose={5000} />
+        {/* ToastContainer is handled in ClientLayout */}
       </div>
     </DashboardErrorBoundary>
   );

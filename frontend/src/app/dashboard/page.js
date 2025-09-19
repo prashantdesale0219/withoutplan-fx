@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { User, Shirt, Zap, Clock, CheckCircle, Award, CreditCard } from 'lucide-react';
 import DashboardErrorBoundary from '@/components/dashboard/DashboardErrorBoundary';
-import PhotoshootCards from '@/components/dashboard/PhotoshootCards';
 import { getAuthToken, getUserData } from '../../lib/cookieUtils';
 
 // Dashboard component wrapped with error boundary

@@ -137,46 +137,84 @@ exports.textToVideo = async (req, res) => {
       });
     }
     
-    // Format the response for frontend
+    // Handle the n8n webhook response format
     let formattedData = response.data;
-    
-    // If resultJson is a string, try to parse it
-    if (formattedData.resultJson && typeof formattedData.resultJson === 'string') {
-      try {
-        const cleanJson = formattedData.resultJson.replace(/`/g, '');
-        formattedData.resultJson = JSON.parse(cleanJson);
-      } catch (e) {
-        console.error('Error parsing resultJson:', e);
-      }
-    }
-    
-    // Extract video URL from response
     let videoUrl = null;
     
-    if (formattedData.resultJson && formattedData.resultJson.videoUrl) {
-      videoUrl = formattedData.resultJson.videoUrl.replace(/`/g, '').trim();
-    } else if (formattedData.videoUrl) {
-      videoUrl = formattedData.videoUrl.replace(/`/g, '').trim();
-    } else if (formattedData.data && formattedData.data.videoUrl) {
-      videoUrl = formattedData.data.videoUrl.replace(/`/g, '').trim();
+    // Check if response has the expected n8n format: {code, msg, data}
+    if (formattedData.code === 200 && formattedData.msg === 'success' && formattedData.data) {
+      console.log('Processing n8n webhook response format');
+      
+      // Extract the actual data from n8n response
+      const n8nData = formattedData.data;
+      
+      // Parse resultJson if it's a string
+      if (n8nData.resultJson && typeof n8nData.resultJson === 'string') {
+        try {
+          const cleanJson = n8nData.resultJson.replace(/`/g, '');
+          const parsedResult = JSON.parse(cleanJson);
+          
+          // Extract video URL from resultUrls array
+          if (parsedResult.resultUrls && Array.isArray(parsedResult.resultUrls) && parsedResult.resultUrls.length > 0) {
+            videoUrl = parsedResult.resultUrls[0].replace(/`/g, '').trim();
+            console.log('Extracted video URL from resultUrls:', videoUrl);
+          }
+        } catch (e) {
+          console.error('Error parsing resultJson:', e);
+        }
+      }
+      
+      // Prepare the formatted response for frontend
+      formattedData = {
+        taskId: n8nData.taskId,
+        model: n8nData.model,
+        state: n8nData.state,
+        videoUrl: videoUrl,
+        costTime: n8nData.costTime,
+        completeTime: n8nData.completeTime,
+        createTime: n8nData.createTime
+      };
+    } else {
+      // Handle other response formats (legacy support)
+      console.log('Processing legacy response format');
+      
+      // If resultJson is a string, try to parse it
+      if (formattedData.resultJson && typeof formattedData.resultJson === 'string') {
+        try {
+          const cleanJson = formattedData.resultJson.replace(/`/g, '');
+          formattedData.resultJson = JSON.parse(cleanJson);
+        } catch (e) {
+          console.error('Error parsing resultJson:', e);
+        }
+      }
+      
+      // Extract video URL from various possible locations
+      if (formattedData.resultJson && formattedData.resultJson.videoUrl) {
+        videoUrl = formattedData.resultJson.videoUrl.replace(/`/g, '').trim();
+      } else if (formattedData.resultJson && formattedData.resultJson.resultUrls && Array.isArray(formattedData.resultJson.resultUrls)) {
+        videoUrl = formattedData.resultJson.resultUrls[0].replace(/`/g, '').trim();
+      } else if (formattedData.videoUrl) {
+        videoUrl = formattedData.videoUrl.replace(/`/g, '').trim();
+      } else if (formattedData.data && formattedData.data.videoUrl) {
+        videoUrl = formattedData.data.videoUrl.replace(/`/g, '').trim();
+      }
     }
     
     if (!videoUrl) {
       console.warn('No video URL found in the response');
+      console.log('Full response data:', JSON.stringify(response.data, null, 2));
     } else {
-      console.log('Extracted video URL:', videoUrl);
+      console.log('Successfully extracted video URL:', videoUrl);
     }
     
-    // Prepare the response data
+    // Prepare the response data for frontend
     responseData = {
       status: 'success',
-      data: formattedData
+      data: {
+        ...formattedData,
+        videoUrl: videoUrl
+      }
     };
-    
-    // If we extracted videoUrl separately, include it directly in the response
-    if (videoUrl) {
-      responseData.data.videoUrl = videoUrl;
-    }
     
     // Deduct credit and update user stats
     user.credits.balance -= 1;
@@ -417,46 +455,84 @@ exports.imageToVideo = async (req, res) => {
       });
     }
     
-    // Format the response for frontend
+    // Handle the n8n webhook response format
     let formattedData = response.data;
-    
-    // If resultJson is a string, try to parse it
-    if (formattedData.resultJson && typeof formattedData.resultJson === 'string') {
-      try {
-        const cleanJson = formattedData.resultJson.replace(/`/g, '');
-        formattedData.resultJson = JSON.parse(cleanJson);
-      } catch (e) {
-        console.error('Error parsing resultJson:', e);
-      }
-    }
-    
-    // Extract video URL from response
     let videoUrl = null;
     
-    if (formattedData.resultJson && formattedData.resultJson.videoUrl) {
-      videoUrl = formattedData.resultJson.videoUrl.replace(/`/g, '').trim();
-    } else if (formattedData.videoUrl) {
-      videoUrl = formattedData.videoUrl.replace(/`/g, '').trim();
-    } else if (formattedData.data && formattedData.data.videoUrl) {
-      videoUrl = formattedData.data.videoUrl.replace(/`/g, '').trim();
+    // Check if response has the expected n8n format: {code, msg, data}
+    if (formattedData.code === 200 && formattedData.msg === 'success' && formattedData.data) {
+      console.log('Processing n8n webhook response format');
+      
+      // Extract the actual data from n8n response
+      const n8nData = formattedData.data;
+      
+      // Parse resultJson if it's a string
+      if (n8nData.resultJson && typeof n8nData.resultJson === 'string') {
+        try {
+          const cleanJson = n8nData.resultJson.replace(/`/g, '');
+          const parsedResult = JSON.parse(cleanJson);
+          
+          // Extract video URL from resultUrls array
+          if (parsedResult.resultUrls && Array.isArray(parsedResult.resultUrls) && parsedResult.resultUrls.length > 0) {
+            videoUrl = parsedResult.resultUrls[0].replace(/`/g, '').trim();
+            console.log('Extracted video URL from resultUrls:', videoUrl);
+          }
+        } catch (e) {
+          console.error('Error parsing resultJson:', e);
+        }
+      }
+      
+      // Prepare the formatted response for frontend
+      formattedData = {
+        taskId: n8nData.taskId,
+        model: n8nData.model,
+        state: n8nData.state,
+        videoUrl: videoUrl,
+        costTime: n8nData.costTime,
+        completeTime: n8nData.completeTime,
+        createTime: n8nData.createTime
+      };
+    } else {
+      // Handle other response formats (legacy support)
+      console.log('Processing legacy response format');
+      
+      // If resultJson is a string, try to parse it
+      if (formattedData.resultJson && typeof formattedData.resultJson === 'string') {
+        try {
+          const cleanJson = formattedData.resultJson.replace(/`/g, '');
+          formattedData.resultJson = JSON.parse(cleanJson);
+        } catch (e) {
+          console.error('Error parsing resultJson:', e);
+        }
+      }
+      
+      // Extract video URL from various possible locations
+      if (formattedData.resultJson && formattedData.resultJson.videoUrl) {
+        videoUrl = formattedData.resultJson.videoUrl.replace(/`/g, '').trim();
+      } else if (formattedData.resultJson && formattedData.resultJson.resultUrls && Array.isArray(formattedData.resultJson.resultUrls)) {
+        videoUrl = formattedData.resultJson.resultUrls[0].replace(/`/g, '').trim();
+      } else if (formattedData.videoUrl) {
+        videoUrl = formattedData.videoUrl.replace(/`/g, '').trim();
+      } else if (formattedData.data && formattedData.data.videoUrl) {
+        videoUrl = formattedData.data.videoUrl.replace(/`/g, '').trim();
+      }
     }
     
     if (!videoUrl) {
       console.warn('No video URL found in the response');
+      console.log('Full response data:', JSON.stringify(response.data, null, 2));
     } else {
-      console.log('Extracted video URL:', videoUrl);
+      console.log('Successfully extracted video URL:', videoUrl);
     }
     
-    // Prepare the response data
+    // Prepare the response data for frontend
     responseData = {
       status: 'success',
-      data: formattedData
+      data: {
+        ...formattedData,
+        videoUrl: videoUrl
+      }
     };
-    
-    // If we extracted videoUrl separately, include it directly in the response
-    if (videoUrl) {
-      responseData.data.videoUrl = videoUrl;
-    }
     
     // Deduct credit and update user stats
     user.credits.balance -= 1;
@@ -710,46 +786,84 @@ exports.audioToVideo = async (req, res) => {
       });
     }
     
-    // Format the response for frontend
+    // Handle the n8n webhook response format
     let formattedData = response.data;
-    
-    // If resultJson is a string, try to parse it
-    if (formattedData.resultJson && typeof formattedData.resultJson === 'string') {
-      try {
-        const cleanJson = formattedData.resultJson.replace(/`/g, '');
-        formattedData.resultJson = JSON.parse(cleanJson);
-      } catch (e) {
-        console.error('Error parsing resultJson:', e);
-      }
-    }
-    
-    // Extract video URL from response
     let videoUrl = null;
     
-    if (formattedData.resultJson && formattedData.resultJson.videoUrl) {
-      videoUrl = formattedData.resultJson.videoUrl.replace(/`/g, '').trim();
-    } else if (formattedData.videoUrl) {
-      videoUrl = formattedData.videoUrl.replace(/`/g, '').trim();
-    } else if (formattedData.data && formattedData.data.videoUrl) {
-      videoUrl = formattedData.data.videoUrl.replace(/`/g, '').trim();
+    // Check if response has the expected n8n format: {code, msg, data}
+    if (formattedData.code === 200 && formattedData.msg === 'success' && formattedData.data) {
+      console.log('Processing n8n webhook response format');
+      
+      // Extract the actual data from n8n response
+      const n8nData = formattedData.data;
+      
+      // Parse resultJson if it's a string
+      if (n8nData.resultJson && typeof n8nData.resultJson === 'string') {
+        try {
+          const cleanJson = n8nData.resultJson.replace(/`/g, '');
+          const parsedResult = JSON.parse(cleanJson);
+          
+          // Extract video URL from resultUrls array
+          if (parsedResult.resultUrls && Array.isArray(parsedResult.resultUrls) && parsedResult.resultUrls.length > 0) {
+            videoUrl = parsedResult.resultUrls[0].replace(/`/g, '').trim();
+            console.log('Extracted video URL from resultUrls:', videoUrl);
+          }
+        } catch (e) {
+          console.error('Error parsing resultJson:', e);
+        }
+      }
+      
+      // Prepare the formatted response for frontend
+      formattedData = {
+        taskId: n8nData.taskId,
+        model: n8nData.model,
+        state: n8nData.state,
+        videoUrl: videoUrl,
+        costTime: n8nData.costTime,
+        completeTime: n8nData.completeTime,
+        createTime: n8nData.createTime
+      };
+    } else {
+      // Handle other response formats (legacy support)
+      console.log('Processing legacy response format');
+      
+      // If resultJson is a string, try to parse it
+      if (formattedData.resultJson && typeof formattedData.resultJson === 'string') {
+        try {
+          const cleanJson = formattedData.resultJson.replace(/`/g, '');
+          formattedData.resultJson = JSON.parse(cleanJson);
+        } catch (e) {
+          console.error('Error parsing resultJson:', e);
+        }
+      }
+      
+      // Extract video URL from various possible locations
+      if (formattedData.resultJson && formattedData.resultJson.videoUrl) {
+        videoUrl = formattedData.resultJson.videoUrl.replace(/`/g, '').trim();
+      } else if (formattedData.resultJson && formattedData.resultJson.resultUrls && Array.isArray(formattedData.resultJson.resultUrls)) {
+        videoUrl = formattedData.resultJson.resultUrls[0].replace(/`/g, '').trim();
+      } else if (formattedData.videoUrl) {
+        videoUrl = formattedData.videoUrl.replace(/`/g, '').trim();
+      } else if (formattedData.data && formattedData.data.videoUrl) {
+        videoUrl = formattedData.data.videoUrl.replace(/`/g, '').trim();
+      }
     }
     
     if (!videoUrl) {
       console.warn('No video URL found in the response');
+      console.log('Full response data:', JSON.stringify(response.data, null, 2));
     } else {
-      console.log('Extracted video URL:', videoUrl);
+      console.log('Successfully extracted video URL:', videoUrl);
     }
     
-    // Prepare the response data
+    // Prepare the response data for frontend
     responseData = {
       status: 'success',
-      data: formattedData
+      data: {
+        ...formattedData,
+        videoUrl: videoUrl
+      }
     };
-    
-    // If we extracted videoUrl separately, include it directly in the response
-    if (videoUrl) {
-      responseData.data.videoUrl = videoUrl;
-    }
     
     // Deduct credit and update user stats
     user.credits.balance -= 1;

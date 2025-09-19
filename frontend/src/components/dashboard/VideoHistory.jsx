@@ -194,33 +194,60 @@ const VideoHistory = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {history.map((item) => (
-            <div key={item.id} className="border border-gray-200 rounded-lg overflow-hidden">
-              <div className="aspect-video bg-gray-100 relative">
+            <div key={item.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="aspect-video bg-gray-900 relative group">
                 <video 
                   src={item.videoUrl} 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                   controls
-                />
-                <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                  preload="metadata"
+                  onLoadStart={() => console.log(`Video ${item.id} loading started`)}
+                  onLoadedData={() => console.log(`Video ${item.id} loaded successfully`)}
+                  onError={(e) => {
+                    console.error(`Video ${item.id} error:`, e);
+                    toast.error(`Error loading video ${item.id}`);
+                  }}
+                  poster="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzMzMzMzMyIvPjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5WaWRlbzwvdGV4dD48L3N2Zz4="
+                >
+                  Your browser does not support the video tag.
+                </video>
+                
+                {/* Video Type Badge */}
+                <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium">
                   {getVideoTypeLabel(item.type)}
+                </div>
+                
+                {/* Play Icon Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
                 </div>
               </div>
               
-              <div className="p-3">
-                <div className="text-xs text-gray-500 mb-1">
-                  {formatDate(item.timestamp)}
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs text-gray-500 font-medium">
+                    {formatDate(item.timestamp)}
+                  </div>
+                  <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                    Video #{item.id}
+                  </div>
                 </div>
-                <p className="text-sm line-clamp-2 mb-2">
+                
+                <p className="text-sm text-gray-800 line-clamp-2 mb-3 leading-relaxed">
                   {item.prompt || 'No prompt provided'}
                 </p>
                 
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center pt-2 border-t border-gray-100">
                   <div className="flex space-x-2">
                     <button
                       onClick={() => downloadVideo(item.videoUrl, `video-${item.id}.mp4`)}
-                      className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                      className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       title="Download video"
                     >
                       <Download className="w-4 h-4" />
@@ -229,16 +256,28 @@ const VideoHistory = () => {
                       href={item.videoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                      className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                       title="Open in new tab"
                     >
                       <ExternalLink className="w-4 h-4" />
                     </a>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(item.videoUrl);
+                        toast.success('Video URL copied!');
+                      }}
+                      className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                      title="Copy video URL"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
                   </div>
                   
                   <button
                     onClick={() => deleteHistoryItem(item.id)}
-                    className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                     title="Delete from history"
                   >
                     <Trash2 className="w-4 h-4" />

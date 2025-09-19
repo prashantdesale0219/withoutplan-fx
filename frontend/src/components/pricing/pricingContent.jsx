@@ -9,12 +9,14 @@ import { toast } from 'react-toastify';
 import api from '@/lib/api';
 import { isAuthenticated, getUserData } from '@/lib/cookieUtils';
 import { loadRazorpayScript, createOrder, savePayment, openRazorpayCheckout } from '@/utils/razorpayUtils';
+import { useCredits } from '../../contexts/CreditContext';
 
 const PricingContent = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [user, setUser] = useState(null);
+  const { credits, loading: creditsLoading, refreshCredits } = useCredits();
   
   useEffect(() => {
     // Check if user is authenticated
@@ -191,10 +193,10 @@ const PricingContent = () => {
               <div className="w-full bg-gray-200 rounded-full h-2.5">
                 <div 
                   className="bg-[var(--coffee)] h-full rounded-full" 
-                  style={{ width: `${Math.min(100, (((typeof user.credits === 'object' ? user.credits.balance : user.credits) || 0) / (((typeof user.credits === 'object' ? user.credits.balance : user.credits) || 0) + ((typeof user.credits === 'object' ? user.credits.imagesGenerated : user.imagesGenerated) || 1))) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (!creditsLoading && credits !== null ? (credits / (credits + (user?.imagesGenerated || 1))) * 100 : 0))}%` }}
                 ></div>
               </div>
-              <span className="text-sm font-medium">{typeof user.credits === 'object' ? user.credits.balance : user.credits || 0} credits left</span>
+              <span className="text-sm font-medium">{!creditsLoading && credits !== null ? credits : 0} credits left</span>
             </div>
           </div>
         )}

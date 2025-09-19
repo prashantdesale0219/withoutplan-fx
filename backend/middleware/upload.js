@@ -20,6 +20,8 @@ const storage = multer.diskStorage({
       uploadPath = path.join(process.env.UPLOAD_PATH || './uploads', 'models');
     } else if (file.fieldname === 'cloth' || file.fieldname === 'clothes') {
       uploadPath = path.join(process.env.UPLOAD_PATH || './uploads', 'clothes');
+    } else if (file.fieldname === 'audio') {
+      uploadPath = path.join(process.env.UPLOAD_PATH || './uploads', 'audio');
     } else {
       uploadPath = path.join(process.env.UPLOAD_PATH || './uploads', 'misc');
     }
@@ -38,15 +40,29 @@ const storage = multer.diskStorage({
 
 // File filter function
 const fileFilter = (req, file, cb) => {
-  // Check file type
-  const allowedTypes = /jpeg|jpg|png|webp/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
-  
-  if (mimetype && extname) {
-    return cb(null, true);
+  // Check file type based on fieldname
+  if (file.fieldname === 'audio') {
+    // Audio file validation
+    const allowedAudioTypes = /mp3|wav|ogg|mpeg/;
+    const extname = allowedAudioTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = /audio\/(mpeg|mp3|wav|ogg)/.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new AppError('Only audio files (MP3, WAV, OGG) are allowed', 400), false);
+    }
   } else {
-    cb(new AppError('Only image files (JPEG, JPG, PNG, WebP) are allowed', 400), false);
+    // Image file validation (default)
+    const allowedImageTypes = /jpeg|jpg|png|webp/;
+    const extname = allowedImageTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedImageTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new AppError('Only image files (JPEG, JPG, PNG, WebP) are allowed', 400), false);
+    }
   }
 };
 
@@ -218,6 +234,9 @@ const uploadConfigs = {
   // Image editor upload
   singleImage: upload.single('image'),
   
+  // Audio upload
+  singleAudio: upload.single('audio'),
+  
   // Multiple cloth images (for combo mode)
   multipleClothes: upload.array('clothes', 2),
   
@@ -231,6 +250,7 @@ const uploadConfigs = {
   singleModelMemory: uploadMemory.single('model'),
   singleClothMemory: uploadMemory.single('cloth'),
   singleImageMemory: uploadMemory.single('image'),
+  singleAudioMemory: uploadMemory.single('audio'),
   multipleClothesMemory: uploadMemory.array('clothes', 2)
 };
 
