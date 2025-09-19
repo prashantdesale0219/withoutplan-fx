@@ -47,4 +47,30 @@ export const navbar =[
         title:"Pricing",
         link:"/pricing"
     },
+    {
+        id:5,
+        title:"Terms & Conditions",
+        link:"/terms-and-conditions",
+        hasDropdown: true,
+        dropdownItems: [
+            {
+                id: 1,
+                title: "Terms & Conditions",
+                link: "/terms-and-conditions",
+                icon: "FileText"
+            },
+            {
+                id: 2,
+                title: "Privacy Policy",
+                link: "/terms-and-conditions/privacy-policy",
+                icon: "Shield"
+            },
+            {
+                id: 3,
+                title: "Cancellation & Refunds",
+                link: "/terms-and-conditions/cancellation-refunds",
+                icon: "RefreshCcw"
+            }
+        ]
+    },
 ]

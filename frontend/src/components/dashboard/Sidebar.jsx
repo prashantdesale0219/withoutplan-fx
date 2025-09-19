@@ -9,7 +9,8 @@ import {
   Home,
   Image,
   CreditCard,
-  Edit3
+  Edit3,
+  Video
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -30,10 +31,16 @@ const Sidebar = () => {
       current: pathname === '/dashboard/apps'
     },
     {
-      name: 'Create',
+      name: 'Image Editor',
       href: '/dashboard/image-editor',
       icon: Edit3,
       current: pathname === '/dashboard/image-editor'
+    },
+    {
+      name: 'Video Generator',
+      href: '/dashboard/video-editor',
+      icon: Video,
+      current: pathname === '/dashboard/video-editor'
     },
     {
       name: 'Pricing',
@@ -73,7 +80,7 @@ const Sidebar = () => {
       `}>
         <div className="flex flex-col h-full">
           {/* Navigation */}
-          <nav className="flex-1 flex flex-col justify-end p-6">
+          <nav className="flex-1 flex flex-col justify-center p-6">
             <ul className="space-y-3">
               {menuItems.map((item) => (
                 <Link

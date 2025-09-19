@@ -158,6 +158,41 @@ const userSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     }
+  }],
+  generatedVideos: [{
+    id: {
+      type: String,
+      required: false
+    },
+    originalUrl: {
+      type: String,
+      required: false
+    },
+    audioUrl: {
+      type: String,
+      required: false
+    },
+    videoUrl: {
+      type: String,
+      required: false
+    },
+    prompt: {
+      type: String,
+      required: false
+    },
+    type: {
+      type: String,
+      enum: ['text-to-video', 'image-to-video', 'audio-to-video'],
+      required: false
+    },
+    taskId: {
+      type: String,
+      default: null
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
   }]
 }, {
   timestamps: true,

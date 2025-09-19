@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-import ImageEditor from '@/components/dashboard/ImageEditor';
 import DashboardErrorBoundary from '@/components/dashboard/DashboardErrorBoundary';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -10,8 +9,9 @@ import { getAuthToken, isAuthenticated as checkIsAuthenticated } from '@/lib/coo
 import { Loader } from 'lucide-react';
 import api from '@/lib/api';
 import PhotoshootCards from '@/components/dashboard/PhotoshootCards';
+import VideoEditor from '@/components/dashboard/VideoEditor';
 
-const ImageEditorPage = () => {
+const VideoEditorPage = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
@@ -55,7 +55,7 @@ const ImageEditorPage = () => {
           <div>
            
            <div className='flex flex-row justify-between items-center max-w-7xl'>
-            <div className='w-lg'><ImageEditor/></div>
+            <div className='w-lg'><VideoEditor/></div>
             <div className='w-7xl'><PhotoshootCards/></div>
              
             </div>
@@ -67,4 +67,4 @@ const ImageEditorPage = () => {
   );
 };
 
-export default ImageEditorPage;
+export default VideoEditorPage;

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import api from '@/lib/api';
 import { isAuthenticated, getUserData } from '@/lib/cookieUtils';
+import { loadRazorpayScript, createOrder, savePayment, openRazorpayCheckout } from '@/utils/razorpayUtils';
 
 const PricingContent = () => {
   const router = useRouter();
@@ -58,32 +59,112 @@ const PricingContent = () => {
       toast.info('Please login to select a plan');
       // Save the selected plan to session storage so we can auto-select it after login
       sessionStorage.setItem('selectedPlan', planId);
-      router.push('/login?redirect=pricing');
+      router.push('/login');
       return;
     }
     
     try {
       setLoading(true);
-      toast.info('Activating plan, please wait...');
       
-      const response = await api.post('/api/plans/select', { plan: planId });
-      
-      if (response.data.success) {
-        toast.success(`${planId.charAt(0).toUpperCase() + planId.slice(1)} plan activated successfully!`);
-        // Update user data in local storage
-        const userData = getUserData();
-        if (userData) {
-          userData.plan = planId;
-          userData.credits = response.data.data.credits;
-          localStorage.setItem('user_data', JSON.stringify(userData));
-          // Dispatch event to notify other components
-          window.dispatchEvent(new Event('userDataChanged'));
-        }
-        router.push('/dashboard');
+      // Get the selected plan details
+      const selectedPlanData = pricingData.plans.find(plan => plan.id === planId);
+      if (!selectedPlanData) {
+        throw new Error('Invalid plan selected');
       }
+      
+      // Free plan doesn't need payment processing
+      if (selectedPlanData.price === 0) {
+        toast.info('Activating free plan, please wait...');
+        const response = await api.post('/api/plans/select', { plan: planId });
+        
+        if (response.data.success) {
+          toast.success(`${planId.charAt(0).toUpperCase() + planId.slice(1)} plan activated successfully!`);
+          // Update user data in local storage
+          const userData = getUserData();
+          if (userData) {
+            userData.plan = planId;
+            userData.credits = response.data.data.credits;
+            localStorage.setItem('user_data', JSON.stringify(userData));
+            // Dispatch event to notify other components
+            window.dispatchEvent(new Event('userDataChanged'));
+          }
+          router.push('/dashboard');
+        }
+        return;
+      }
+      
+      // For paid plans, process payment with Razorpay
+      toast.info('Preparing payment gateway...');
+      
+      // Load Razorpay script
+      const isScriptLoaded = await loadRazorpayScript();
+      if (!isScriptLoaded) {
+        throw new Error('Failed to load Razorpay checkout script');
+      }
+      
+      // Create Razorpay order
+      const orderData = await createOrder(selectedPlanData.name, selectedPlanData.price);
+      
+      if (!orderData || !orderData.data || !orderData.data.order || !orderData.data.key) {
+        throw new Error('Failed to create order: Invalid response from server');
+      }
+      
+      const userData = getUserData();
+      
+      // Configure Razorpay options
+      const options = {
+        key: orderData.data.key,
+        amount: orderData.data.order.amount,
+        currency: orderData.data.order.currency,
+        name: 'FashionX',
+        description: `${selectedPlanData.name} Plan Subscription`,
+        order_id: orderData.data.order.id,
+        prefill: {
+          name: userData?.name || '',
+          email: userData?.email || '',
+        },
+        theme: {
+          color: '#6B4F3F', // Coffee color
+        },
+        handler: async function(response) {
+          try {
+            // Save payment details
+            const paymentDetails = {
+              userId: userData.id,
+              planName: selectedPlanData.name,
+              amount: selectedPlanData.price,
+              paymentId: response.razorpay_payment_id,
+              orderId: response.razorpay_order_id,
+              status: 'success'
+            };
+            
+            await savePayment(paymentDetails);
+            
+            toast.success(`${selectedPlanData.name} plan activated successfully!`);
+            
+            // Update user data in local storage
+            if (userData) {
+              userData.plan = planId;
+              userData.credits = selectedPlanData.credits;
+              localStorage.setItem('user_data', JSON.stringify(userData));
+              // Dispatch event to notify other components
+              window.dispatchEvent(new Event('userDataChanged'));
+            }
+            
+            router.push('/dashboard');
+          } catch (error) {
+            console.error('Error processing payment:', error);
+            toast.error('Payment was successful, but there was an error activating your plan. Please contact support.');
+          }
+        }
+      };
+      
+      // Open Razorpay checkout
+      await openRazorpayCheckout(options);
+      
     } catch (error) {
-      console.error('Error selecting plan:', error);
-      toast.error(error.response?.data?.error || 'Failed to select plan');
+      console.error('Error processing payment:', error);
+      toast.error(error.message || 'Failed to process payment');
     } finally {
       setLoading(false);
     }
