@@ -95,7 +95,7 @@ const PricingCard = ({ plan, onSelect, selectedPlan, loading, isCurrentPlan }) =
                 <span className="text-[var(--almond)] mt-1">
                   <FaCheck size={12} />
                 </span>
-                <span className="text-sm">{feature.text}</span>
+                <span className="text-sm text-gray-800">{feature.text}</span>
               </div>
             )}
           </div>

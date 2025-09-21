@@ -17,6 +17,9 @@ const planRoutes = require('./routes/plan');
 const uploadRoutes = require('./routes/upload');
 const userImagesRoutes = require('./routes/userImages');
 const paymentRoutes = require('./routes/payment');
+const adminRoutes = require('./routes/admin');
+const userRoutes = require('./routes/user');
+const termsRoutes = require('./routes/terms');
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -70,7 +73,7 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
   exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
@@ -115,13 +118,17 @@ app.get('/health', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes); // Adding direct /auth route to match frontend requests
 app.use('/api/image-edit', imageEditRoutes);
 app.use('/api/video-edit', videoEditRoutes);
 app.use('/api/plans', planRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/user/images', userImagesRoutes);
-app.use('/api/user', require('./routes/userVideos'));
+app.use('/api/user/videos', require('./routes/userVideos'));
+app.use('/api/user', userRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/terms', termsRoutes);
 
 // Error handling middleware
 app.use(notFound);

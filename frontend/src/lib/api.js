@@ -3,13 +3,13 @@ import { getAuthToken } from './cookieUtils';
 
 // Create a custom axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080/api',
   withCredentials: true, // Important: This enables sending cookies with requests
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   },
-  timeout: 10000 // Add timeout to prevent hanging requests
+  timeout: 15000 // Increased timeout to prevent hanging requests
 });
 
 console.log('API Base URL:', api.defaults.baseURL);
@@ -31,6 +31,7 @@ api.interceptors.request.use(
     return config;
   },
   error => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -38,15 +39,53 @@ api.interceptors.request.use(
 // Add a response interceptor to handle common errors
 api.interceptors.response.use(
   response => {
+    // Log successful responses for debugging
+    console.log(`API Success: ${response.config.url}`, response.status);
     return response;
   },
   error => {
     // Log detailed error information
     console.error('API Error:', error.message);
+    console.error('API Error Config:', error.config?.url);
+    console.error('API Error Status:', error.response?.status);
     
     if (error.code === 'ERR_NETWORK') {
       console.error('Network error - Cannot connect to backend server');
-      // You can show a toast notification here if needed
+      // Add retry mechanism for network errors
+      const originalRequest = error.config;
+      
+      // Initialize retry count if it doesn't exist
+      if (originalRequest._retryCount === undefined) {
+        originalRequest._retryCount = 0;
+      }
+      
+      // Only retry if we haven't already tried 3 times
+      if (originalRequest._retryCount < 3) {
+        originalRequest._retryCount += 1;
+        console.log(`Retrying request (${originalRequest._retryCount}/3)...`);
+        
+        // Wait for 1 second before retrying
+        return new Promise(resolve => {
+          setTimeout(() => {
+            resolve(api(originalRequest));
+          }, 1000);
+        });
+      }
+      
+      // If we've already retried 3 times, reject with a more user-friendly message
+      error.userFriendlyMessage = 'Cannot connect to server. Please check your internet connection and try again.';
+      
+      // Check if backend server is running
+      console.error('Please ensure that the backend server is running at: ' + api.defaults.baseURL);
+    }
+    
+    // Handle 404 errors specifically for auth endpoints
+    if (error.response && error.response.status === 404) {
+      console.error(`Endpoint not found: "${error.config.url}"`);
+      // For auth verification endpoints, provide more detailed logging
+      if (error.config.url.includes('/auth/verify')) {
+        console.error('Authentication verification endpoint not found. This may indicate a backend configuration issue.');
+      }
     }
     
     // Handle authentication errors
@@ -55,8 +94,14 @@ api.interceptors.response.use(
       
       // Check if we're in the login process
       const isLoginProcess = window.location.pathname === '/login' || 
+                            window.location.pathname === '/register' ||
                             (typeof window !== 'undefined' && 
-                             window.location.href.includes('/api/auth/login'));
+                             (window.location.href.includes('/auth/login') || 
+                              window.location.href.includes('/login') ||
+                              window.location.href.includes('/register')));
+      
+      console.log('Is login process?', isLoginProcess);
+      console.log('Current path:', window.location.pathname);
       
       // Only redirect if we're not in the login process
       if (!isLoginProcess) {
@@ -74,4 +119,5 @@ api.interceptors.response.use(
   }
 );
 
+// Export the API instance
 export default api;

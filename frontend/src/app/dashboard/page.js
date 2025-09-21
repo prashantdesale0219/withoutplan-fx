@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { User, Shirt, Zap, Clock, CheckCircle, Award, CreditCard } from 'lucide-react';
 import DashboardErrorBoundary from '@/components/dashboard/DashboardErrorBoundary';
 import { getAuthToken, getUserData } from '../../lib/cookieUtils';
+import { calculateCreditUsage, formatCreditDisplay, getCreditColorClass } from '@/lib/creditUtils';
 
 // Dashboard component wrapped with error boundary
 const DashboardContent = () => {
@@ -213,19 +214,19 @@ const DashboardContent = () => {
                 <h3 className="text-sm font-semibold text-gray-900">Credits</h3>
               </div>
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-xl font-bold text-gray-900">{user.credits?.balance || 0}</span>
-                <span className="text-xs text-gray-500">remaining</span>
+                <span className="text-xl font-bold text-gray-900">{user.credits?.total - user.credits?.used || 0}</span>
+                <span className="text-xs text-gray-500">remaining of {user.credits?.total || 0}</span>
               </div>
               <div className="mb-2 bg-gray-200 h-2 rounded-full overflow-hidden">
                 <div 
-                  className="bg-gray-600 h-full rounded-full" 
-                  style={{ width: `${Math.min(100, ((user.credits?.balance || 0) / ((user.credits?.balance || 0) + (user.credits?.imagesGenerated || 1))) * 100)}%` }}
+                  className={`${getCreditColorClass(calculateCreditUsage(user.credits))} h-full rounded-full`}
+                  style={{ width: `${calculateCreditUsage(user.credits)}%` }}
                 ></div>
               </div>
               <p className="text-xs text-gray-500">
-                {user.credits?.imagesGenerated || 0} images generated
+                {user.credits?.used || 0} credits used ({Math.round(calculateCreditUsage(user.credits))}%)
               </p>
-              {user.credits?.balance <= 0 && (
+              {(user.credits?.total - user.credits?.used <= 0) && (
                 <div className="mt-2 text-xs text-red-600 bg-red-50 border border-red-200 p-2 rounded">
                   ⚠️ You have run out of credits. Please upgrade your plan to continue generating images.
                 </div>

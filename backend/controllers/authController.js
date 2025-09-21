@@ -18,7 +18,7 @@ const setTokenCookie = (res, token) => {
     ),
     httpOnly: false, // Allow JavaScript access for frontend
     secure: false, // Set to false for localhost development
-    sameSite: 'strict', // Use strict for better security in development
+    sameSite: 'lax', // Changed to lax for better compatibility
     path: '/'
   };
   
@@ -127,10 +127,12 @@ const requestOTP = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 const login = asyncHandler(async (req, res) => {
+  console.log('Login attempt received:', req.body.email);
   const { email, password } = req.body;
   
   // Validate all required fields
   if (!email || !password) {
+    console.log('Missing email or password');
     throw new AppError('Email and password are required', 400);
   }
   
@@ -138,33 +140,48 @@ const login = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
   
   if (!user) {
+    console.log('User not found:', email);
     throw new AppError('Invalid email or password', 401);
   }
   
+  console.log('User found:', user.email);
+  
   // Check if account is active
   if (!user.isActive) {
+    console.log('Account is deactivated:', user.email);
     throw new AppError('Account is deactivated. Please contact support.', 401);
   }
   
   // Check password
   const isPasswordValid = await user.comparePassword(password);
   if (!isPasswordValid) {
+    console.log('Invalid password for user:', user.email);
     throw new AppError('Invalid email or password', 401);
   }
   
+  console.log('Password validated successfully');
+  
+  // For development purposes, temporarily skip email verification check
+  // Comment this back in when email verification is working properly
+  /*
   // Check if email is verified
   if (!user.isEmailVerified) {
+    console.log('Email not verified:', user.email);
     throw new AppError('Email not verified. Please verify your email before logging in.', 401);
   }
+  */
   
   // Generate token
   const token = generateToken(user._id);
+  console.log('Token generated successfully');
   
   // Set cookie
   setTokenCookie(res, token);
+  console.log('Token cookie set successfully');
   
   // Update last login
   await user.updateLastLogin();
+  console.log('Last login updated successfully');
   
   // Check if user has a plan, if not, set default free plan
   if (!user.plan || (user.plan === 'free' && user.credits.balance === 0)) {
@@ -240,6 +257,13 @@ const getMe = asyncHandler(async (req, res) => {
         lastLogin: user.lastLogin,
         preferences: user.preferences,
         apiUsage: user.apiUsage,
+        plan: user.plan,
+        planActivatedAt: user.planActivatedAt,
+        credits: {
+          available: user.credits.balance,
+          totalPurchased: user.credits.totalPurchased,
+          totalUsed: user.credits.totalUsed
+        },
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }

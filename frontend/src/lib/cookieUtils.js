@@ -12,8 +12,8 @@ export const setCookie = (name, value, options = {}) => {
   const defaults = {
     path: '/',
     expires: 7, // 7 days default
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
+    secure: false, // Set to false for local development
+    sameSite: 'lax' // Changed to lax for better compatibility
   };
   
   const cookieOptions = { ...defaults, ...options };

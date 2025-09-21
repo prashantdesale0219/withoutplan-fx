@@ -18,24 +18,18 @@ export const navbar =[
         dropdownItems: [
             {
                 id: 1,
-                title: "Help Center",
-                link: "/help-center",
-                icon: "HelpCircle"
-            },
-            {
-                id: 2,
                 title: "Blog",
                 link: "/blog",
                 icon: "FileText"
             },
             {
-                id: 3,
+                id: 2,
                 title: "Case Studies",
                 link: "/case-studies",
                 icon: "BookOpen"
             },
             {
-                id: 4,
+                id: 3,
                 title: "FAQs",
                 link: "/faq",
                 icon: "HelpCircle"
@@ -52,7 +46,7 @@ export const navbar =[
         title:"Terms & Conditions",
         link:"/terms-and-conditions",
         hasDropdown: true,
-        dropdownItems: [
+           dropdownItems: [
             {
                 id: 1,
                 title: "Terms & Conditions",
@@ -69,7 +63,7 @@ export const navbar =[
                 id: 3,
                 title: "Cancellation & Refunds",
                 link: "/terms-and-conditions/cancellation-refunds",
-                icon: "RefreshCcw"
+                icon: "Refresh"
             }
         ]
     },

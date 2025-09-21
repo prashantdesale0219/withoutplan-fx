@@ -17,9 +17,27 @@ export default function LoginPage() {
         const isValidAuth = isAuthenticated();
         
         if (isValidAuth) {
-          console.log('User is authenticated and validated, redirecting to dashboard');
-          router.push('/dashboard');
-          return;
+          try {
+            // Get user data to check role
+            console.log('Fetching user data for role check');
+            const response = await api.get('/auth/me');
+            const userData = response.data;
+            
+            // Redirect based on user role
+            if (userData.role === 'admin') {
+              console.log('Admin user authenticated, redirecting to admin dashboard');
+              router.push('/admin/dashboard');
+            } else {
+              console.log('User is authenticated and validated, redirecting to dashboard');
+              router.push('/dashboard');
+            }
+            return;
+          } catch (userError) {
+            console.error('Error fetching user data:', userError);
+            // If we can't get user data, show login form
+            setChecking(false);
+            return;
+          }
         }
         
         // If we get here, user is not authenticated or token is invalid

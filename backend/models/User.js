@@ -105,6 +105,20 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  termsAccepted: {
+    status: {
+      type: Boolean,
+      default: false
+    },
+    acceptedAt: {
+      type: Date,
+      default: null
+    },
+    version: {
+      type: String,
+      default: '1.0'
+    }
+  },
   credits: {
     balance: {
       type: Number,

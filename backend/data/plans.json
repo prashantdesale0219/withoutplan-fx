@@ -1,0 +1,81 @@
+[
+  {
+    "id": "free",
+    "name": "Free",
+    "price": 300,
+    "credits": 3,
+    "description": "One-time per user",
+    "features": [
+      {
+        "text": "3 AI-generated images",
+        "header": false
+      },
+      {
+        "text": "Basic editing tools",
+        "header": false
+      },
+      {
+        "text": "Standard resolution",
+        "header": false
+      },
+      {
+        "text": "24/7 Support",
+        "header": false
+      }
+    ]
+  },
+  {
+    "id": "basic",
+    "name": "Basic",
+    "price": 500,
+    "credits": 50,
+    "description": "Starter plan",
+    "features": [
+      {
+        "text": "50 AI-generated images",
+        "header": false
+      },
+      {
+        "text": "Advanced editing tools",
+        "header": false
+      },
+      {
+        "text": "HD resolution",
+        "header": false
+      },
+      {
+        "text": "Email support",
+        "header": false
+      }
+    ]
+  },
+  {
+    "id": "pro",
+    "name": "Pro",
+    "price": 999,
+    "credits": 200,
+    "description": "Recommended plan",
+    "features": [
+      "200 AI-generated images",
+      "Premium editing tools",
+      "4K resolution",
+      "Priority support",
+      "Commercial usage"
+    ]
+  },
+  {
+    "id": "enterprise",
+    "name": "Enterprise",
+    "price": 2999,
+    "credits": 1000,
+    "description": "For businesses",
+    "features": [
+      "1000 AI-generated images",
+      "All premium features",
+      "Unlimited resolution",
+      "Dedicated support",
+      "API access",
+      "Custom branding"
+    ]
+  }
+]

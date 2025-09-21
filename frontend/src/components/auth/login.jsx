@@ -127,8 +127,9 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
         console.log('Sending login request with credentials using api instance');
         
         // Login without OTP using our configured api instance
+        console.log('Attempting login with:', formData.email);
         const response = await api.post(
-          '/api/auth/login', 
+          '/auth/login', 
           {
             email: formData.email,
             password: formData.password
@@ -175,13 +176,13 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
               // Add a small delay to ensure token is properly set
               await new Promise(resolve => setTimeout(resolve, 300));
               
-              const userResponse = await api.get('/api/plans/current');
+              const userResponse = await api.get('/plans/current');
               const userData = userResponse.data.data;
               
               // If user doesn't have credits or has never selected a plan before
               if (userData.credits === 0 || (!userData.planActivatedAt && userData.plan === 'free')) {
                 console.log('Automatically selecting free plan for new user');
-                const planResponse = await api.post('/api/plans/select', { plan: 'free' });
+                const planResponse = await api.post('/plans/select', { plan: 'free' });
                 
                 if (planResponse.data.success) {
                   // Update user data in local storage with new plan info
@@ -201,13 +202,28 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
               // Continue with redirect even if plan selection fails
             }
             
-            // Redirect to the stored path or dashboard if none
-            const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
-            console.log('Redirecting to:', redirectPath);
-            sessionStorage.removeItem('redirectAfterLogin'); // Clear the stored path
-            
-            // Use router.push for smooth navigation without full page reload
-            router.push(redirectPath);
+            // Check user role and redirect accordingly
+            try {
+              const userDataResponse = await api.get('/auth/me');
+              const userData = userDataResponse.data.data?.user || userDataResponse.data;
+              
+              if (userData.role === 'admin') {
+                console.log('Admin user authenticated, redirecting to admin dashboard');
+                router.push('/admin/dashboard');
+              } else {
+                // Redirect to the stored path or dashboard if none
+                const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
+                console.log('Redirecting to:', redirectPath);
+                sessionStorage.removeItem('redirectAfterLogin'); // Clear the stored path
+                
+                // Use router.push for smooth navigation without full page reload
+                router.push(redirectPath);
+              }
+            } catch (error) {
+              console.error('Error checking user role:', error);
+              // Fallback to dashboard if role check fails
+              router.push('/dashboard');
+            }
           }, 1000); // Increased delay to 1 second to ensure cookies are set
         }
       } else {
