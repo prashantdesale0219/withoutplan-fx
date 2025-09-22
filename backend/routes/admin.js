@@ -13,6 +13,11 @@ router.use(admin);
 router.get('/users', adminController.getAllUsers);
 router.get('/users/:id', adminController.getUserById);
 router.patch('/users/:id/credits', adminController.updateUserCredits);
+router.patch('/users/:userId/status', adminController.updateUserStatus); // Block/Unblock user
+router.delete('/users/:userId', adminController.deleteUser); // Delete user
+router.put('/users/:userId', adminController.updateUser); // Update user profile
+router.post('/users', adminController.createUser); // Create new user
+router.post('/users/verify-otp', adminController.verifyUserOTP); // Verify OTP for admin created user
 
 // Analytics routes
 router.get('/analytics', adminController.getAnalytics);

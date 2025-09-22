@@ -31,7 +31,364 @@ exports.getAllUsers = async (req, res) => {
     const filter = { role: 'user' };
     
     // Only show users with role 'user', not admins
-    if (plan) filter.plan = plan;
+    if (plan) filter.plan = plan.toLowerCase();
+    if (tcAccepted) filter.termsAccepted = tcAccepted === 'true';
+    
+    // Search by name or email
+    if (search) {
+      filter.$or = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Execute query with pagination
+    const users = await User.find(filter)
+      .select('-passwordHash -emailVerificationToken -passwordResetToken')
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+    
+    // Get total count for pagination
+    const total = await User.countDocuments(filter);
+    
+    res.status(200).json({
+      status: 'success',
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: parseInt(page),
+      data: users
+    });
+  } catch (err) {
+    console.error('Error in getAllUsers:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch users'
+    });
+  }
+};
+
+/**
+ * Get user by ID with full profile and media history
+ * @route GET /api/admin/users/:id
+ * @access Private (Admin only)
+ */
+exports.getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .select('-passwordHash -emailVerificationToken -passwordResetToken');
+    
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+    
+    // Get user's payment history
+    const payments = await Payment.find({ user: user._id })
+      .sort({ createdAt: -1 })
+      .limit(10);
+    
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user,
+        payments
+      }
+    });
+  } catch (err) {
+    console.error('Error in getUserById:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch user details'
+    });
+  }
+};
+
+/**
+ * Update user credits
+ * @route PATCH /api/admin/users/:id/credits
+ * @access Private (Admin only)
+ */
+exports.updateUserCredits = async (req, res) => {
+  try {
+    const { credits } = req.body;
+    
+    if (!credits) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Credits data is required'
+      });
+    }
+    
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+    
+    // Update user credits
+    user.credits = {
+      ...user.credits,
+      ...credits
+    };
+    
+    await user.save();
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'User credits updated successfully',
+      data: {
+        credits: user.credits
+      }
+    });
+  } catch (err) {
+    console.error('Error in updateUserCredits:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to update user credits'
+    });
+  }
+};
+
+/**
+ * Update user status (block/unblock)
+ * @route PATCH /api/admin/users/:userId/status
+ * @access Private (Admin only)
+ */
+exports.updateUserStatus = async (req, res) => {
+  try {
+    const { isBlocked } = req.body;
+    
+    if (typeof isBlocked !== 'boolean') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'isBlocked must be a boolean value'
+      });
+    }
+    
+    const user = await User.findById(req.params.userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+    
+    user.isBlocked = isBlocked;
+    await user.save();
+    
+    res.status(200).json({
+      status: 'success',
+      message: `User ${isBlocked ? 'blocked' : 'unblocked'} successfully`,
+      data: {
+        user: {
+          _id: user._id,
+          email: user.email,
+          isBlocked: user.isBlocked
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Error in updateUserStatus:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to update user status'
+    });
+  }
+};
+
+/**
+ * Delete user
+ * @route DELETE /api/admin/users/:userId
+ * @access Private (Admin only)
+ */
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+    
+    await User.findByIdAndDelete(req.params.userId);
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'User deleted successfully'
+    });
+  } catch (err) {
+    console.error('Error in deleteUser:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to delete user'
+    });
+  }
+};
+
+/**
+ * Update user profile
+ * @route PUT /api/admin/users/:userId
+ * @access Private (Admin only)
+ */
+exports.updateUser = async (req, res) => {
+  try {
+    const { firstName, lastName, email, plan, role } = req.body;
+    
+    // Find user
+    const user = await User.findById(req.params.userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+    
+    // Update fields if provided
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
+    if (email) user.email = email;
+    if (plan) user.plan = plan;
+    if (role && ['user', 'admin'].includes(role)) user.role = role;
+    
+    await user.save();
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'User updated successfully',
+      data: {
+        user: {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          plan: user.plan,
+          role: user.role
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Error in updateUser:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to update user'
+    });
+  }
+};
+
+/**
+ * Create new user
+ * @route POST /api/admin/users
+ * @access Private (Admin only)
+ */
+exports.createUser = async (req, res) => {
+  try {
+    const { firstName, lastName, email, password, plan, role, planPrice, credits } = req.body;
+    
+    // Check if required fields are provided
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Please provide firstName, lastName, email and password'
+      });
+    }
+    
+    // Check if user with this email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'User with this email already exists'
+      });
+    }
+    
+    // Create new user
+    const newUser = new User({
+      firstName,
+      lastName,
+      email,
+      role: role && ['user', 'admin'].includes(role) ? role : 'user',
+      plan: plan || 'Free',
+      emailVerified: true // Admin created accounts are pre-verified
+    });
+    
+    // Set password
+    newUser.setPassword(password);
+    
+    // Set planPrice
+    const planDetails = getPlanDetails(newUser.plan);
+    newUser.planPrice = planPrice !== undefined ? planPrice : planDetails.price;
+    
+    // Set credits based on provided credits or plan
+    if (credits) {
+      newUser.credits = {
+        ...credits,
+        totalUsed: credits.totalUsed || 0,
+        balance: credits.balance || planDetails.credits
+      };
+    } else {
+      newUser.credits = {
+        totalPurchased: planDetails.credits,
+        totalUsed: 0,
+        balance: planDetails.credits,
+        imagesGenerated: 0,
+        videosGenerated: 0,
+        scenesGenerated: 0
+      };
+    }
+    
+    await newUser.save();
+    
+    res.status(201).json({
+      status: 'success',
+      message: 'User created successfully',
+      data: {
+        user: {
+          _id: newUser._id,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          email: newUser.email,
+          plan: newUser.plan,
+          planPrice: newUser.planPrice,
+          credits: newUser.credits,
+          role: newUser.role
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Error in createUser:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to create user'
+    });
+  }
+};
+
+/**
+ * Get all users with filtering options
+ * @route GET /api/admin/users
+ * @access Private (Admin only)
+ */
+exports.getAllUsers = async (req, res) => {
+  try {
+    const { plan, media, tcAccepted, search, page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+    
+    // Build filter object
+    const filter = { role: 'user' };
+    
+    // Only show users with role 'user', not admins
+    if (plan) filter.plan = plan.toLowerCase();
     if (tcAccepted) filter.termsAccepted = tcAccepted === 'true';
     
     // Search by name or email
@@ -88,142 +445,159 @@ exports.getAllUsers = async (req, res) => {
 };
 
 /**
- * Update user plan
- * @route PATCH /api/admin/users/:id/plan
+ * Block/Unblock a user
+ * @route PATCH /api/admin/users/:userId/status
  * @access Private (Admin only)
  */
-exports.updateUserPlan = async (req, res) => {
+exports.updateUserStatus = async (req, res) => {
   try {
-    const userId = req.params.id;
-    const { plan, planPrice } = req.body;
+    const { userId } = req.params;
+    const { isBlocked } = req.body;
     
-    if (!plan) {
-      return res.status(400).json({
-        success: false,
-        message: 'Plan is required'
+    if (typeof isBlocked !== 'boolean') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'isBlocked field must be a boolean value' 
       });
     }
-
-    // Convert plan to lowercase to match User model schema
-    const normalizedPlan = plan.toLowerCase();
-    const validPlans = ['free', 'basic', 'pro', 'enterprise'];
     
-    if (!validPlans.includes(normalizedPlan)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid plan type'
-      });
-    }
-
     const user = await User.findById(userId);
     
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
       });
     }
     
-    // Get plan details including credits
-    const planDetails = getPlanDetails(normalizedPlan);
-    
-    // Update user plan and credits
-    user.plan = normalizedPlan;
-    
-    // Update credits based on the plan
-    if (!user.credits) {
-      user.credits = {
-        balance: planDetails.credits,
-        totalPurchased: planDetails.credits,
-        totalUsed: 0,
-        imagesGenerated: 0
-      };
-    } else {
-      // Update credits while preserving usage data
-      user.credits.totalPurchased = planDetails.credits;
-      user.credits.balance = planDetails.credits - (user.credits.totalUsed || 0);
-      
-      // Ensure balance doesn't go negative
-      if (user.credits.balance < 0) {
-        user.credits.balance = 0;
-      }
-    }
-    
-    // Update plan price if provided
-    if (planPrice !== undefined) {
-      user.planPrice = planPrice;
-    } else {
-      user.planPrice = planDetails.price;
-    }
-    
+    // Update user status
+    user.isBlocked = isBlocked;
     await user.save();
-
+    
     return res.status(200).json({
       success: true,
-      message: 'User plan and credits updated successfully',
+      message: isBlocked ? 'User has been blocked' : 'User has been unblocked',
       data: {
         userId: user._id,
-        plan: user.plan,
-        planPrice: user.planPrice,
-        credits: user.credits
+        isBlocked: user.isBlocked
       }
     });
   } catch (error) {
-    console.error('Error updating user plan:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error while updating user plan',
-      error: error.message
+    console.error('Error updating user status:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error while updating user status' 
     });
   }
 };
 
 /**
- * Log admin security actions
- * @route POST /api/admin/security/log
+ * Delete a user
+ * @route DELETE /api/admin/users/:userId
  * @access Private (Admin only)
  */
-exports.logSecurityAction = async (req, res) => {
+exports.deleteUser = async (req, res) => {
   try {
-    const { action, timestamp } = req.body;
+    const { userId } = req.params;
     
-    if (!action) {
-      return res.status(400).json({
-        success: false,
-        message: 'Action is required'
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
       });
     }
     
-    // Here you would typically save this to a database
-    // For now, we'll just log it to the console
-    console.log(`Admin Security Log: ${req.user.email} performed ${action} at ${timestamp}`);
+    // Delete user
+    await User.findByIdAndDelete(userId);
     
     return res.status(200).json({
       success: true,
-      message: 'Security action logged successfully'
+      message: 'User has been deleted successfully',
+      data: {
+        userId
+      }
     });
   } catch (error) {
-    console.error('Error logging security action:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error while logging security action',
-      error: error.message
+    console.error('Error deleting user:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error while deleting user' 
     });
   }
 };
 
 /**
- * Get a single user by ID with full profile and media history
- * @route GET /api/admin/users/:id
+ * Update user profile
+ * @route PUT /api/admin/users/:userId
  * @access Private (Admin only)
  */
-exports.getUserById = async (req, res) => {
+exports.updateUser = async (req, res) => {
   try {
-    const userId = req.params.id;
+    const { userId } = req.params;
+    const { firstName, lastName, email, phone, plan } = req.body;
     
-    const user = await User.findById(userId)
-      .select('-passwordHash -emailVerificationToken -passwordResetToken');
+    const user = await User.findById(userId);
     
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Update user fields
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+    if (plan) user.plan = plan.toLowerCase();
+    
+    await user.save();
+    
+    return res.status(200).json({
+      success: true,
+      message: 'User profile updated successfully',
+      data: {
+        user: {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone,
+          plan: user.plan
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error while updating user' 
+    });
+  }
+};
+
+/**
+ * Verify OTP for admin created user
+ * @route POST /api/admin/users/verify-otp
+ * @access Private (Admin only)
+ */
+exports.verifyUserOTP = async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+    
+    // Check if required fields are provided
+    if (!userId || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide userId and OTP'
+      });
+    }
+    
+    // Find user by ID
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -231,11 +605,114 @@ exports.getUserById = async (req, res) => {
       });
     }
     
-    // Ensure credits are properly set based on plan
-    const planDetails = getPlanDetails(user.plan);
+    // Check if OTP is valid and not expired
+    if (user.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP'
+      });
+    }
     
-    // Initialize credits if not present
-    if (!user.credits) {
+    if (user.otpExpires < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired'
+      });
+    }
+    
+    // Mark user as verified
+    user.isEmailVerified = true;
+    user.otp = null;
+    user.otpExpires = null;
+    
+    await user.save();
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Email verified successfully',
+      data: {
+        user: {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          isEmailVerified: user.isEmailVerified
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Error in verifyUserOTP:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while verifying OTP'
+    });
+  }
+};
+
+/**
+ * Create a new user
+ * @route POST /api/admin/users
+ * @access Private (Admin only)
+ */
+exports.createUser = async (req, res) => {
+  try {
+    const { firstName, lastName, email, password, phone, plan = 'free', planPrice, credits } = req.body;
+    
+    // Check if required fields are provided
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide firstName, lastName, email and password'
+      });
+    }
+    
+    // Check if user with email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this email already exists'
+      });
+    }
+    
+    // Generate OTP for email verification
+    const emailService = require('../services/emailService');
+    const otp = emailService.generateOTP();
+    const otpExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes expiry
+    
+    // Create new user with unverified status
+    const user = new User({
+      firstName,
+      lastName,
+      email,
+      phone,
+      plan: plan.toLowerCase(),
+      role: 'user',
+      isEmailVerified: false, // Set to false until OTP verification
+      otp: otp,
+      otpExpires: otpExpires,
+      termsAccepted: true, // Admin created users accept terms by default
+      isBlocked: false
+    });
+    
+    // Use bcrypt to encrypt password
+    const bcrypt = require('bcryptjs');
+    const salt = await bcrypt.genSalt(12);
+    user.passwordHash = await bcrypt.hash(password, salt);
+    
+    // Set planPrice
+    const planDetails = getPlanDetails(plan);
+    user.planPrice = planPrice !== undefined ? planPrice : planDetails.price;
+    
+    // Set credits based on provided credits or plan
+    if (credits) {
+      user.credits = {
+        ...credits,
+        totalUsed: credits.totalUsed || 0,
+        balance: credits.balance || planDetails.credits
+      };
+    } else {
       user.credits = {
         totalPurchased: planDetails.credits,
         totalUsed: 0,
@@ -244,120 +721,41 @@ exports.getUserById = async (req, res) => {
         videosGenerated: 0,
         scenesGenerated: 0
       };
-      await user.save();
-    } else if (user.credits.totalPurchased < planDetails.credits) {
-      // Update credits if they're less than what the plan should provide
-      user.credits.totalPurchased = planDetails.credits;
-      user.credits.balance = planDetails.credits - user.credits.totalUsed;
-      if (user.credits.balance < 0) user.credits.balance = 0;
-      await user.save();
-    }
-    
-    // Get user's payment history
-    const payments = await Payment.find({ userId }).sort({ createdAt: -1 });
-    
-    // Enhance user data with plan and credits information
-    const planCredits = planDetails.credits;
-    const planPrice = planDetails.price;
-    
-    const enhancedUser = {
-      ...user._doc,
-      planPrice: planPrice,
-      credits: {
-        totalPurchased: user.credits?.totalPurchased || planCredits,
-        totalUsed: user.credits?.totalUsed || 0,
-        balance: user.credits?.balance || planCredits,
-        imagesGenerated: user.credits?.imagesGenerated || 0,
-        videosGenerated: user.credits?.videosGenerated || 0,
-        scenesGenerated: user.credits?.scenesGenerated || 0
-      }
-    };
-    
-    res.status(200).json({
-      success: true,
-      data: enhancedUser
-    });
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching user',
-      error: error.message
-    });
-  }
-};
-
-/**
- * Update user credits
- * @route PATCH /api/admin/users/:id/credits
- * @access Private (Admin only)
- */
-exports.updateUserCredits = async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const { credits } = req.body;
-    
-    if (!credits || typeof credits !== 'object') {
-      return res.status(400).json({
-        success: false,
-        message: 'Credits object is required'
-      });
-    }
-    
-    const user = await User.findById(userId);
-    
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-    
-    // Initialize credits object if it doesn't exist
-    if (!user.credits) {
-      user.credits = {
-        balance: 0,
-        totalPurchased: 0,
-        totalUsed: 0,
-        imagesGenerated: 0,
-        videosGenerated: 0,
-        scenesGenerated: 0
-      };
-    }
-    
-    // Update all credit fields
-    if (credits.totalPurchased !== undefined) user.credits.totalPurchased = credits.totalPurchased;
-    if (credits.totalUsed !== undefined) user.credits.totalUsed = credits.totalUsed;
-    if (credits.balance !== undefined) user.credits.balance = credits.balance;
-    if (credits.imagesGenerated !== undefined) user.credits.imagesGenerated = credits.imagesGenerated;
-    if (credits.videosGenerated !== undefined) user.credits.videosGenerated = credits.videosGenerated;
-    if (credits.scenesGenerated !== undefined) user.credits.scenesGenerated = credits.scenesGenerated;
-    
-    // For backward compatibility
-    if (credits.total !== undefined) user.credits.totalPurchased = credits.total;
-    if (credits.used !== undefined) user.credits.totalUsed = credits.used;
-    
-    // Calculate balance if not explicitly provided
-    if (credits.balance === undefined && (credits.totalPurchased !== undefined || credits.totalUsed !== undefined)) {
-      user.credits.balance = user.credits.totalPurchased - user.credits.totalUsed;
-      // Ensure balance doesn't go negative
-      if (user.credits.balance < 0) user.credits.balance = 0;
     }
     
     await user.save();
     
-    res.status(200).json({
+    // Send OTP to user's email
+    try {
+      await emailService.sendNewUserVerificationOTP(email, firstName, otp);
+    } catch (emailError) {
+      console.error('Error sending OTP email:', emailError);
+      // Continue with user creation even if email fails
+    }
+    
+    return res.status(201).json({
       success: true,
-      message: 'User credits updated successfully',
+      message: 'User created successfully. OTP sent to email for verification.',
+      userId: user._id,
+      requiresOTP: true,
       data: {
-        credits: user.credits
+        user: {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone,
+          plan: user.plan,
+          planPrice: user.planPrice,
+          credits: user.credits
+        }
       }
     });
   } catch (error) {
-    console.error('Error updating user credits:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while updating user credits',
+    console.error('Error creating user:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error while creating user',
       error: error.message
     });
   }
@@ -370,102 +768,181 @@ exports.updateUserCredits = async (req, res) => {
  */
 exports.getAnalytics = async (req, res) => {
   try {
-    // Total users count
-    const totalUsers = await User.countDocuments();
+    // Get total users count
+    const totalUsers = await User.countDocuments({ role: 'user' });
     
-    // Users per plan
-    const usersByPlan = await User.aggregate([
-      {
-        $group: {
-          _id: '$plan',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
+    // Get users by plan
+    const freeUsers = await User.countDocuments({ role: 'user', plan: 'free' });
+    const basicUsers = await User.countDocuments({ role: 'user', plan: 'basic' });
+    const proUsers = await User.countDocuments({ role: 'user', plan: 'pro' });
+    const enterpriseUsers = await User.countDocuments({ role: 'user', plan: 'enterprise' });
     
-    // Terms & Conditions acceptance
-    const termsAccepted = await User.countDocuments({ termsAccepted: true });
+    // Get recent payments
+    const recentPayments = await Payment.find()
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate('user', 'firstName lastName email');
     
-    // Get media generation stats
-    const users = await User.find();
-    let totalImages = 0;
-    let totalVideos = 0;
-    let totalScenes = 0;
-    let totalCreditsUsed = 0;
-    let totalCreditsAllocated = 0;
+    // Get total revenue
+    const payments = await Payment.find();
+    const totalRevenue = payments.reduce((acc, payment) => acc + (payment.amount || 0), 0);
     
-    // Credits by plan
-    let creditsByPlan = {
-      Free: { used: 0, issued: 0 },
-      Basic: { used: 0, issued: 0 },
-      Pro: { used: 0, issued: 0 },
-      Enterprise: { used: 0, issued: 0 }
-    };
-    
-    users.forEach(user => {
-      // Count media by type
-      if (user.mediaGenerated) {
-        user.mediaGenerated.forEach(media => {
-          if (media.type === 'image') totalImages++;
-          if (media.type === 'video') totalVideos++;
-          if (media.type === 'scene') totalScenes++;
-        });
-      }
-      
-      // Count credits
-      if (user.credits) {
-        const used = user.credits.used || 0;
-        const total = user.credits.total || 0;
-        
-        totalCreditsUsed += used;
-        totalCreditsAllocated += total;
-        
-        // Add to plan-specific credits
-        const plan = user.plan || 'Free';
-        if (creditsByPlan[plan]) {
-          creditsByPlan[plan].used += used;
-          creditsByPlan[plan].issued += total;
-        }
-      }
-    });
-    
-    // Format data for frontend
-    const analytics = {
-      userStats: {
-        total: totalUsers,
-        active: totalUsers, // Assuming all users are active for now
-        new: 0, // This would need a date filter to calculate
-        planDistribution: usersByPlan.reduce((acc, item) => {
-          acc[item._id || 'Free'] = item.count;
-          return acc;
-        }, {}),
-        termsAcceptanceRate: totalUsers > 0 ? termsAccepted / totalUsers : 0
-      },
-      mediaStats: {
-        totalGenerated: totalImages + totalVideos + totalScenes,
-        images: totalImages,
-        videos: totalVideos,
-        scenes: totalScenes
-      },
-      creditStats: {
-        total: totalCreditsAllocated,
-        totalIssued: totalCreditsAllocated,
-        totalUsed: totalCreditsUsed,
-        averagePerUser: totalUsers > 0 ? totalCreditsAllocated / totalUsers : 0,
-        byPlan: creditsByPlan
-      }
-    };
-    
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      data: analytics
+      data: {
+        userStats: {
+          total: totalUsers,
+          byPlan: {
+            free: freeUsers,
+            basic: basicUsers,
+            pro: proUsers,
+            enterprise: enterpriseUsers
+          }
+        },
+        financialStats: {
+          totalRevenue,
+          recentPayments
+        }
+      }
     });
   } catch (error) {
     console.error('Error fetching analytics:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: 'Server error while fetching analytics',
-      error: error.message
+      message: 'Server error while fetching analytics'
+    });
+  }
+};
+
+/**
+ * Update user plan
+ * @route PATCH /api/admin/users/:id/plan
+ * @access Private (Admin only)
+ */
+exports.updateUserPlan = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { plan, planPrice, credits } = req.body;
+    
+    if (!plan) {
+      return res.status(400).json({
+        success: false,
+        message: 'Plan is required'
+      });
+    }
+    
+    const user = await User.findById(id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Update user plan
+    user.plan = plan.toLowerCase();
+    
+    // Always update planPrice when provided
+    if (planPrice !== undefined) {
+      user.planPrice = planPrice;
+    } else {
+      // If planPrice not provided, get it from plan details
+      const planInfo = getPlanDetails(plan);
+      user.planPrice = planInfo.price;
+    }
+    
+    // If credits are provided directly, use them
+    if (credits) {
+      // Ensure lastPurchase is properly formatted as an object with date and amount
+      const lastPurchase = {
+        date: new Date(),
+        amount: credits.balance || 0
+      };
+      
+      user.credits = {
+        ...user.credits,
+        ...credits,
+        lastPurchase: lastPurchase
+      };
+    } else {
+      // Otherwise update credits based on new plan
+      const planDetails = getPlanDetails(plan);
+      
+      // Add new credits from plan
+      const currentBalance = user.credits?.balance || 0;
+      user.credits = {
+        ...user.credits,
+        totalPurchased: (user.credits?.totalPurchased || 0) + planDetails.credits,
+        balance: currentBalance + planDetails.credits,
+        lastPurchase: {
+          date: new Date(),
+          amount: planDetails.credits
+        }
+      };
+    }
+    
+    // Save user with updated plan and credits
+    const updatedUser = await user.save();
+    
+    // Make sure the user data is properly updated in the database
+    await User.findByIdAndUpdate(id, {
+      plan: updatedUser.plan,
+      planPrice: updatedUser.planPrice,
+      credits: updatedUser.credits
+    }, { new: true });
+    
+    return res.status(200).json({
+      success: true,
+      message: 'User plan updated successfully',
+      data: {
+        user: {
+          _id: updatedUser._id,
+          email: updatedUser.email,
+          plan: updatedUser.plan,
+          planPrice: updatedUser.planPrice,
+          credits: updatedUser.credits
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error updating user plan:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while updating user plan'
+    });
+  }
+};
+
+/**
+ * Log security action
+ * @route POST /api/admin/security/log
+ * @access Private (Admin only)
+ */
+exports.logSecurityAction = async (req, res) => {
+  try {
+    const { action, userId, details } = req.body;
+    
+    if (!action) {
+      return res.status(400).json({
+        success: false,
+        message: 'Action is required'
+      });
+    }
+    
+    // Here you would typically log this to a security log collection
+    // For now, we'll just log to console
+    console.log(`SECURITY LOG: Admin ${req.user._id} performed ${action} on user ${userId || 'N/A'} with details: ${JSON.stringify(details || {})}`);
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Security action logged successfully'
+    });
+  } catch (error) {
+    console.error('Error logging security action:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while logging security action'
     });
   }
 };

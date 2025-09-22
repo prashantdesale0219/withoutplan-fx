@@ -122,6 +122,7 @@ app.use('/auth', authRoutes); // Adding direct /auth route to match frontend req
 app.use('/api/image-edit', imageEditRoutes);
 app.use('/api/video-edit', videoEditRoutes);
 app.use('/api/plans', planRoutes);
+app.use('/plans', planRoutes); // Adding direct /plans route to match frontend requests
 app.use('/api/upload', uploadRoutes);
 app.use('/api/user/images', userImagesRoutes);
 app.use('/api/user/videos', require('./routes/userVideos'));

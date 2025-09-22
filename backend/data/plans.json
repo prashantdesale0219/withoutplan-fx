@@ -27,7 +27,7 @@
   {
     "id": "basic",
     "name": "Basic",
-    "price": 500,
+    "price": 499,
     "credits": 50,
     "description": "Starter plan",
     "features": [
@@ -76,6 +76,16 @@
       "Dedicated support",
       "API access",
       "Custom branding"
+    ]
+  },
+  {
+    "id": "ccc",
+    "name": "vdvdv",
+    "price": 355,
+    "credits": 555,
+    "description": "5ggg",
+    "features": [
+      "grgrgr"
     ]
   }
 ]

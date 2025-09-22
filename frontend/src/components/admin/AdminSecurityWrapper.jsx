@@ -23,7 +23,7 @@ const AdminSecurityWrapper = ({ children }) => {
   // Log admin actions
   const logAdminAction = async (action) => {
     try {
-      await api.post('/admin/security/log', { action, timestamp: new Date() });
+      await api.post('/api/admin/security/log', { action, timestamp: new Date() });
     } catch (error) {
       console.error('Failed to log admin action:', error);
     }

@@ -3,7 +3,7 @@ import { getAuthToken } from './cookieUtils';
 
 // Create a custom axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080',
   withCredentials: true, // Important: This enables sending cookies with requests
   headers: {
     'Content-Type': 'application/json',

@@ -98,6 +98,14 @@ const verifyToken = async (req, res, next) => {
       });
     }
     
+    // Check if user is blocked
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been blocked. Please contact support for assistance.'
+      });
+    }
+    
     // Add user to request object with id field for compatibility
     req.user = {
       ...user.toObject(),

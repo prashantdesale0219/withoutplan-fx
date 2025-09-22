@@ -176,7 +176,7 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
               // Add a small delay to ensure token is properly set
               await new Promise(resolve => setTimeout(resolve, 300));
               
-              const userResponse = await api.get('/plans/current');
+              const userResponse = await api.get('/api/plans/current');
               const userData = userResponse.data.data;
               
               // If user doesn't have credits or has never selected a plan before

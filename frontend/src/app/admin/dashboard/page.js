@@ -130,7 +130,26 @@ export default function AdminDashboard() {
         setLoading(true);
         // Fetch analytics data
         const analyticsResponse = await adminApi.getAnalytics();
-        setAnalytics(analyticsResponse.data.data);
+        const analyticsData = analyticsResponse.data.data;
+        
+        // Transform backend data to match frontend structure
+        const transformedAnalytics = {
+          totalUsers: analyticsData.userStats?.total || 0,
+          usersByPlan: analyticsData.userStats?.planDistribution || {},
+          termsAcceptance: {
+            accepted: Math.round((analyticsData.userStats?.termsAcceptanceRate || 0) * (analyticsData.userStats?.total || 0)),
+            notAccepted: Math.round((1 - (analyticsData.userStats?.termsAcceptanceRate || 0)) * (analyticsData.userStats?.total || 0))
+          },
+          mediaGenerated: {
+            images: analyticsData.mediaStats?.images || 0,
+            videos: analyticsData.mediaStats?.videos || 0,
+            scenes: analyticsData.mediaStats?.scenes || 0
+          },
+          creditsUsed: analyticsData.creditStats?.totalUsed || 0,
+          creditsTotal: analyticsData.creditStats?.total || 0
+        };
+        
+        setAnalytics(transformedAnalytics);
         
         // Fetch recent users for activity
         const usersResponse = await adminApi.getUsers({}, 1, 5);

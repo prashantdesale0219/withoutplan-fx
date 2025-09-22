@@ -12,13 +12,21 @@ const adminApi = {
    * @returns {Promise} - API response
    */
   getUsers: async (filters = {}, page = 1, limit = 10) => {
+    // Create a clean query params object without empty values
+    const cleanFilters = {};
+    Object.keys(filters).forEach(key => {
+      if (filters[key] !== '' && filters[key] !== null && filters[key] !== undefined) {
+        cleanFilters[key] = filters[key];
+      }
+    });
+    
     const queryParams = new URLSearchParams({
       page,
       limit,
-      ...filters
+      ...cleanFilters
     }).toString();
     
-    return api.get(`/admin/users?${queryParams}`);
+    return api.get(`/api/admin/users?${queryParams}`);
   },
   
   /**
@@ -27,7 +35,7 @@ const adminApi = {
    * @returns {Promise} - API response
    */
   getUserById: async (userId) => {
-    return api.get(`/admin/users/${userId}`);
+    return api.get(`/api/admin/users/${userId}`);
   },
   
   /**
@@ -37,7 +45,54 @@ const adminApi = {
    * @returns {Promise} - API response
    */
   updateUserCredits: async (userId, credits) => {
-    return api.patch(`/admin/users/${userId}/credits`, { credits });
+    return api.patch(`/api/admin/users/${userId}/credits`, { credits });
+  },
+  
+  /**
+   * Block or unblock a user
+   * @param {String} userId - User ID
+   * @param {Boolean} isBlocked - Block status
+   * @returns {Promise} - API response
+   */
+  updateUserStatus: async (userId, isBlocked) => {
+    return api.patch(`/api/admin/users/${userId}/status`, { isBlocked });
+  },
+  
+  /**
+   * Delete a user
+   * @param {String} userId - User ID
+   * @returns {Promise} - API response
+   */
+  deleteUser: async (userId) => {
+    return api.delete(`/api/admin/users/${userId}`);
+  },
+  
+  /**
+   * Update user profile
+   * @param {String} userId - User ID
+   * @param {Object} userData - User data to update
+   * @returns {Promise} - API response
+   */
+  updateUser: async (userId, userData) => {
+    return api.put(`/api/admin/users/${userId}`, userData);
+  },
+  
+  /**
+   * Create a new user
+   * @param {Object} userData - User data
+   * @returns {Promise} - API response
+   */
+  createUser: async (userData) => {
+    return api.post(`/api/admin/users`, userData);
+  },
+  
+  /**
+   * Verify user OTP
+   * @param {Object} data - OTP verification data
+   * @returns {Promise} - API response
+   */
+  verifyUserOTP: async (data) => {
+    return api.post(`/api/admin/users/verify-otp`, data);
   },
   
   /**
@@ -45,7 +100,7 @@ const adminApi = {
    * @returns {Promise} - API response
    */
   getAnalytics: async () => {
-    return api.get('/admin/analytics');
+    return api.get('/api/admin/analytics');
   },
   
   /**
@@ -55,7 +110,7 @@ const adminApi = {
    * @returns {Promise} - API response
    */
   updateUserPlan: async (userId, planData) => {
-    return api.patch(`/admin/users/${userId}/plan`, planData);
+    return api.patch(`/api/admin/users/${userId}/plan`, planData);
   },
   
   /**
@@ -65,7 +120,7 @@ const adminApi = {
    * @returns {Promise} - API response
    */
   processRefund: async (userId, transactionId) => {
-    return api.post(`/admin/users/${userId}/refund`, { transactionId });
+    return api.post(`/api/admin/users/${userId}/refund`, { transactionId });
   },
   
   /**
@@ -74,7 +129,16 @@ const adminApi = {
    * @returns {Promise} - API response
    */
   getUserTransactions: async (userId) => {
-    return api.get(`/admin/users/${userId}/transactions`);
+    return api.get(`/api/admin/users/${userId}/transactions`);
+  },
+  
+  /**
+   * Create a new user
+   * @param {Object} userData - User data (firstName, lastName, email, password, plan, etc.)
+   * @returns {Promise} - API response
+   */
+  createUser: async (userData) => {
+    return api.post('/api/admin/users', userData);
   }
 };
 

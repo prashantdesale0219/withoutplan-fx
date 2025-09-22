@@ -33,7 +33,7 @@ const PricingContent = () => {
     const fetchPlans = async () => {
       try {
         setPlansLoading(true);
-        const response = await api.get('/plans');
+        const response = await api.get('/api/plans');
         if (response.data.success) {
           setPlans(response.data.plans || response.data.data?.plans || []);
         }
@@ -54,7 +54,7 @@ const PricingContent = () => {
       // Get current plan details from API
       const fetchCurrentPlan = async () => {
         try {
-          const response = await api.get('/plans/current');
+          const response = await api.get('/api/plans/current');
           if (response.data.success) {
             const userData = getUserData();
             if (userData) {
