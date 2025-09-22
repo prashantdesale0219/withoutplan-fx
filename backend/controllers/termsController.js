@@ -17,11 +17,9 @@ const acceptTerms = asyncHandler(async (req, res) => {
   }
   
   // Update terms acceptance status
-  user.termsAccepted = {
-    status: true,
-    acceptedAt: new Date(),
-    version: req.body.version || '1.0'
-  };
+  user.termsAccepted.status = true;
+  user.termsAccepted.acceptedAt = new Date();
+  user.termsAccepted.version = req.body.version || '1.0';
   
   // Save updated user
   await user.save();

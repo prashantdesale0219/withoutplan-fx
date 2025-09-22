@@ -16,11 +16,12 @@ export const loadRazorpayScript = () => {
 };
 
 // Create Razorpay order
-export const createOrder = async (planName, amount) => {
+export const createOrder = async (planName, amount, termsAccepted = false) => {
   try {
     const response = await axios.post('/api/payment/create-order', {
       planName,
-      amount
+      amount,
+      termsAccepted
     }, {
       headers: {
         'Content-Type': 'application/json'

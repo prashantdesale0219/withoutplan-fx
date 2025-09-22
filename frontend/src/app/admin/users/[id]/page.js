@@ -56,7 +56,11 @@ export default function UserDetail({ params }) {
           plan: userDataFromResponse.plan || 'Free',
           planPrice: userDataFromResponse.planPrice || getPlanPrice(userDataFromResponse.plan), // Use API planPrice or fallback to local calculation
           role: userDataFromResponse.role || 'user',
-          termsAccepted: userDataFromResponse.termsAccepted || false,
+          termsAccepted: userDataFromResponse.termsAccepted ? 
+            (typeof userDataFromResponse.termsAccepted === 'boolean' ? 
+              { status: userDataFromResponse.termsAccepted, acceptedAt: null, version: 'N/A' } : 
+              userDataFromResponse.termsAccepted) : 
+            { status: false, acceptedAt: null, version: 'N/A' },
           lastLogin: userDataFromResponse.lastLogin || null,
           credits: userDataFromResponse.credits || {
             totalPurchased: userDataFromResponse.credits?.totalPurchased || 0,
@@ -391,9 +395,17 @@ export default function UserDetail({ params }) {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 font-medium">Terms Accepted</p>
-                    <p className="text-sm font-medium">
-                      {user.termsAccepted ? 'Yes' : 'No'}
-                    </p>
+                    <div className="text-sm">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.termsAccepted?.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {user.termsAccepted?.status ? 'Yes' : 'No'}
+                      </span>
+                      {user.termsAccepted?.status && user.termsAccepted?.acceptedAt && (
+                        <div className="text-xs mt-1">
+                          <div>Date: {new Date(user.termsAccepted.acceptedAt).toLocaleString()}</div>
+                          <div>Version: {user.termsAccepted.version || 'N/A'}</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 font-medium">Email Address</p>

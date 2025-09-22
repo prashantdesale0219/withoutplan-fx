@@ -46,7 +46,15 @@ export default function UsersManagement() {
           videosGenerated: user.credits?.videosGenerated || 0,
           scenesGenerated: user.credits?.scenesGenerated || 0
         },
-        termsAccepted: user.termsAccepted || false
+        termsAccepted: user.termsAccepted ? {
+          status: typeof user.termsAccepted === 'boolean' ? user.termsAccepted : (user.termsAccepted.status || false),
+          acceptedAt: user.termsAccepted.acceptedAt ? new Date(user.termsAccepted.acceptedAt).toLocaleString() : 'N/A',
+          version: user.termsAccepted.version || 'N/A'
+        } : {
+          status: false,
+          acceptedAt: 'N/A',
+          version: 'N/A'
+        }
       }));
       
       setUsers(processedUsers);
@@ -267,9 +275,15 @@ export default function UsersManagement() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.termsAccepted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {user.termsAccepted ? 'Yes' : 'No'}
+                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.termsAccepted?.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {user.termsAccepted?.status ? 'Yes' : 'No'}
                           </span>
+                          {user.termsAccepted?.status && (
+                            <div className="text-xs mt-1">
+                              <div>Date: {user.termsAccepted.acceptedAt}</div>
+                              <div>Version: {user.termsAccepted.version}</div>
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}

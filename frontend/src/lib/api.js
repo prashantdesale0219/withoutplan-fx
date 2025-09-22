@@ -47,7 +47,13 @@ api.interceptors.response.use(
     // Log detailed error information
     console.error('API Error:', error.message);
     console.error('API Error Config:', error.config?.url);
-    console.error('API Error Status:', error.response?.status);
+    
+    // Check if error.response exists before accessing status
+    if (error.response) {
+      console.error('API Error Status:', error.response.status);
+    } else {
+      console.error('API Error Status: No response received');
+    }
     
     if (error.code === 'ERR_NETWORK') {
       console.error('Network error - Cannot connect to backend server');

@@ -121,13 +121,6 @@ export default function AdminDashboard() {
       icon: <Users className="w-8 h-8" />,
       link: '/admin/users',
       color: 'bg-[#26140c] hover:bg-[#aa7156]'
-    },
-    {
-      title: 'Content Management',
-      description: 'Manage platform content',
-      icon: <FileText className="w-8 h-8" />,
-      link: '/admin/content',
-      color: 'bg-[#aa7156] hover:bg-[#26140c]'
     }
   ];
 
