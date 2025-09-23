@@ -65,6 +65,11 @@ exports.editImage = async (req, res) => {
     if (cardId) {
       // Fix cardId format if it contains hyphens (e.g., product-type-jeans)
       let formattedCardId = cardId;
+      let originalCardId = cardId;
+      
+      // Store both hyphen and underscore versions
+      let hyphenVersion = cardId;
+      let underscoreVersion = cardId;
       
       // Check if cardId is in format like "product-type-jeans"
       const cardParts = cardId.split('-');
@@ -73,15 +78,44 @@ exports.editImage = async (req, res) => {
         const categoryPart = `${cardParts[0]}_${cardParts[1]}`;
         const itemPart = cardParts.slice(2).join('_');
         formattedCardId = `${categoryPart}_${itemPart}`;
+        underscoreVersion = formattedCardId;
         console.log(`Reformatted cardId from ${cardId} to ${formattedCardId}`);
+      } else if (cardId.includes('-')) {
+        underscoreVersion = cardId.replace(/-/g, '_');
+        formattedCardId = underscoreVersion;
+      } else if (cardId.includes('_')) {
+        hyphenVersion = cardId.replace(/_/g, '-');
       }
       
       // Map cardId to corresponding webhook environment variable
-      webhookKey = `${formattedCardId.toUpperCase()}_N8N_WEBHOOK`;
-      n8nWebhookUrl = process.env[webhookKey];
+      // Try multiple formats to find the correct webhook URL
+      const possibleWebhookKeys = [
+        // Format 1: With CARD prefix and underscore version
+        `CARD${underscoreVersion.toUpperCase()}_N8N_WEBHOOK`,
+        // Format 2: With CARD prefix and hyphen version
+        `CARD${hyphenVersion.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+        // Format 3: Without prefix, underscore version
+        `${underscoreVersion.toUpperCase()}_N8N_WEBHOOK`,
+        // Format 4: Without prefix, hyphen version converted to underscore
+        `${hyphenVersion.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+        // Format 5: Category specific format (e.g., SHOT_STYLE_HERO_BANNER)
+        `${categoryKey.toUpperCase()}_${itemKey.toUpperCase()}_${cardId.split('-').slice(2).join('_').toUpperCase()}_N8N_WEBHOOK`,
+        // Format 6: Direct match with cardId
+        `${cardId.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`
+      ];
+      
+      // Try each possible webhook key
+      for (const key of possibleWebhookKeys) {
+        if (process.env[key]) {
+          webhookKey = key;
+          n8nWebhookUrl = process.env[key];
+          console.log(`Found webhook URL using key: ${webhookKey}`);
+          break;
+        }
+      }
       
       if (!n8nWebhookUrl) {
-        console.log(`Webhook URL not found for card: ${cardId} (key: ${webhookKey}), using default webhook`);
+        console.log(`Webhook URL not found for card: ${cardId} (tried multiple keys), using default webhook`);
         n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
       } else {
         console.log(`Using specific webhook for card ${cardId}: ${webhookKey}`);
@@ -124,6 +158,23 @@ exports.editImage = async (req, res) => {
           webhookKey = `${categoryKey.toUpperCase()}_PRESETS_${itemKey.toUpperCase()}_N8N_WEBHOOK`;
           n8nWebhookUrl = process.env[webhookKey];
           console.log(`Trying original format: ${webhookKey}`);
+        }
+        
+        // Try direct URL format as in .env file
+        if (!n8nWebhookUrl) {
+          // Check for channel-* format URLs
+          const channelKey = `channel-${itemKey.replace(/_/g, '-').toLowerCase()}`;
+          console.log(`Trying direct channel URL format: ${channelKey}`);
+          
+          // Loop through all environment variables to find matching URL
+          for (const envKey in process.env) {
+            if (process.env[envKey] && process.env[envKey].includes(channelKey)) {
+              n8nWebhookUrl = process.env[envKey];
+              webhookKey = envKey;
+              console.log(`Found matching URL by pattern: ${webhookKey}`);
+              break;
+            }
+          }
         }
       }
       
@@ -186,6 +237,26 @@ exports.editImage = async (req, res) => {
               n8nWebhookUrl = process.env[webhookKey];
               console.log(`Trying hyphen-formatted webhook key: ${webhookKey}`);
             }
+            
+            // Special handling for hero-banner
+            if (!n8nWebhookUrl && (itemKey.includes('hero') || (cardId && cardId.includes('hero')))) {
+              // Try specific hero banner formats
+              const heroKeys = [
+                'SHOT_STYLE_HERO_BANNER_N8N_WEBHOOK',
+                'HERO_BANNER_N8N_WEBHOOK',
+                'HERO_BANNER_STYLE_N8N_WEBHOOK',
+                'SHOT_HERO_BANNER_N8N_WEBHOOK'
+              ];
+              
+              for (const key of heroKeys) {
+                if (process.env[key]) {
+                  webhookKey = key;
+                  n8nWebhookUrl = process.env[key];
+                  console.log(`Found hero banner webhook using key: ${webhookKey}`);
+                  break;
+                }
+              }
+            }
           }
         } else if (categoryKey === 'mood_genre') {
           // Direct mapping for mood_genre to MOOD_GENRE_FINISHES
@@ -217,6 +288,31 @@ exports.editImage = async (req, res) => {
         webhookKey = `${categoryKey}_N8N_WEBHOOK`.toUpperCase();
         n8nWebhookUrl = process.env[webhookKey];
         console.log(`Trying category-level webhook key: ${webhookKey}`);
+      }
+      
+      // Special handling for apps card
+      if (!n8nWebhookUrl && (itemKey.toLowerCase().includes('app') || categoryKey.toLowerCase().includes('app'))) {
+        webhookKey = 'APPS_CARD_N8N_WEBHOOK';
+        n8nWebhookUrl = process.env[webhookKey];
+        console.log(`Trying apps card webhook: ${webhookKey}`);
+        
+        if (!n8nWebhookUrl) {
+          // Try other variations
+          const possibleKeys = [
+            'APP_CARD_N8N_WEBHOOK',
+            'APPS_CARDS_N8N_WEBHOOK',
+            'APP_CARDS_N8N_WEBHOOK'
+          ];
+          
+          for (const key of possibleKeys) {
+            if (process.env[key]) {
+              n8nWebhookUrl = process.env[key];
+              webhookKey = key;
+              console.log(`Found apps card webhook: ${webhookKey}`);
+              break;
+            }
+          }
+        }
       }
       
       // For mood-genre, try with FINISHES suffix if not found
