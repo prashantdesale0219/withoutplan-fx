@@ -98,15 +98,46 @@ exports.editImage = async (req, res) => {
       
       console.log(`Looking for webhook with category: ${categoryKey}, item: ${itemKey}`);
       
-      // Try specific category-item webhook first
+      // Try specific category-item webhook first - format: CATEGORY_ITEM
       webhookKey = `${categoryKey}_${itemKey}_N8N_WEBHOOK`.toUpperCase();
       n8nWebhookUrl = process.env[webhookKey];
       console.log(`Trying webhook key: ${webhookKey}`);
       
-      // If not found, try category-level webhook
+      // If not found, try with CATEGORY_PRESETS_ITEM format (for target-channel)
+      if (!n8nWebhookUrl && categoryKey === 'target_channel') {
+        webhookKey = `${categoryKey}_PRESETS_${itemKey}_N8N_WEBHOOK`.toUpperCase();
+        n8nWebhookUrl = process.env[webhookKey];
+        console.log(`Trying alternative webhook key: ${webhookKey}`);
+      }
+      
+      // If not found, try with special formats for other categories
+      if (!n8nWebhookUrl) {
+        if (categoryKey === 'scene_loc') {
+          webhookKey = 'SCENE_LOCATION_AMBIENCE_N8N_WEBHOOK';
+        } else if (categoryKey === 'shot_style') {
+          webhookKey = 'SHOT_STYLE_USE_CASE_N8N_WEBHOOK';
+        } else if (categoryKey === 'mood_genre') {
+          webhookKey = 'MOOD_GENRE_FINISHES_N8N_WEBHOOK';
+        }
+        
+        if (webhookKey) {
+          n8nWebhookUrl = process.env[webhookKey];
+          console.log(`Trying special format webhook key: ${webhookKey}`);
+        }
+      }
+      
+      // If still not found, try category-level webhook
       if (!n8nWebhookUrl) {
         webhookKey = `${categoryKey}_N8N_WEBHOOK`.toUpperCase();
         n8nWebhookUrl = process.env[webhookKey];
+        console.log(`Trying category-level webhook key: ${webhookKey}`);
+      }
+      
+      // For mood-genre, try with FINISHES suffix if not found
+      if (!n8nWebhookUrl && categoryKey === 'mood_genre') {
+        webhookKey = `${categoryKey}_FINISHES_N8N_WEBHOOK`.toUpperCase();
+        n8nWebhookUrl = process.env[webhookKey];
+        console.log(`Trying with FINISHES suffix: ${webhookKey}`);
       }
       
       // If still not found, use default
