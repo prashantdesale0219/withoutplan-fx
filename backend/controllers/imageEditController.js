@@ -114,13 +114,23 @@ exports.editImage = async (req, res) => {
       if (!n8nWebhookUrl) {
         if (categoryKey === 'scene_loc') {
           webhookKey = 'SCENE_LOCATION_AMBIENCE_N8N_WEBHOOK';
+          n8nWebhookUrl = process.env[webhookKey];
+          console.log(`Trying special format webhook key: ${webhookKey}`);
+          
+          // Try with specific scene location if available
+          if (!n8nWebhookUrl && itemKey) {
+            // For taj-inspired-palatial and similar items
+            const formattedItem = itemKey.replace(/_/g, '-');
+            webhookKey = `SCENE_LOCATION_AMBIENCE_${itemKey.toUpperCase()}_N8N_WEBHOOK`;
+            n8nWebhookUrl = process.env[webhookKey];
+            console.log(`Trying specific scene location webhook key: ${webhookKey}`);
+          }
         } else if (categoryKey === 'shot_style') {
           webhookKey = 'SHOT_STYLE_USE_CASE_N8N_WEBHOOK';
+          n8nWebhookUrl = process.env[webhookKey];
+          console.log(`Trying special format webhook key: ${webhookKey}`);
         } else if (categoryKey === 'mood_genre') {
           webhookKey = 'MOOD_GENRE_FINISHES_N8N_WEBHOOK';
-        }
-        
-        if (webhookKey) {
           n8nWebhookUrl = process.env[webhookKey];
           console.log(`Trying special format webhook key: ${webhookKey}`);
         }
@@ -184,7 +194,12 @@ exports.editImage = async (req, res) => {
       item: item || null,
       webhookType: cardId ? 'card' : (category && item ? 'category' : 'custom'),
       userId: req.user.id,
-      userEmail: user.email
+      userEmail: user.email,
+      recordInfo: {
+        id: `img_${Date.now()}`,
+        type: 'image',
+        source: cardId || `${category}-${item}`
+      }
     };
     
     // Send request to n8n webhook
