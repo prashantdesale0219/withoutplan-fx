@@ -198,104 +198,300 @@ exports.editImage = async (req, res) => {
       
       // If not found, try with special formats for other categories
       if (!n8nWebhookUrl) {
-        if (categoryKey === 'scene_loc') {
-          // Direct mapping for scene_loc to SCENE_LOCATION_AMBIENCE
-          webhookKey = 'SCENE_LOCATION_AMBIENCE_N8N_WEBHOOK';
-          n8nWebhookUrl = process.env[webhookKey];
-          console.log(`Trying standard format webhook key: ${webhookKey}`);
+        // Try to find webhook URL by direct URL pattern matching first
+        // This helps with finding the correct webhook URL even if the naming convention is different
+        const categoryUrlPatterns = {
+          'scene_loc': 'scene-',
+          'scene_location': 'scene-',
+          'shot_style': 'shot-',
+          'mood_genre': 'mood-',
+          'target_channel': 'channel-'
+        };
+        
+        // Get the URL pattern for the current category
+        const urlPattern = categoryUrlPatterns[categoryKey];
+        
+        if (urlPattern && itemKey) {
+          // Format the item key for URL pattern matching
+          const formattedItemForUrl = itemKey.replace(/_/g, '-').toLowerCase();
+          const fullPattern = `${urlPattern}${formattedItemForUrl}`;
+          console.log(`Trying to find webhook URL with pattern: ${fullPattern}`);
           
-          // If specific item is provided, try with that item directly
-          if (!n8nWebhookUrl && itemKey) {
-            // Convert itemKey to proper format (replace underscores with hyphens)
-            const formattedItem = itemKey.replace(/_/g, '-');
-            
-            // Try exact match first
-            webhookKey = `SCENE_LOCATION_AMBIENCE_${itemKey.toUpperCase()}_N8N_WEBHOOK`;
-            n8nWebhookUrl = process.env[webhookKey];
-            console.log(`Trying exact match webhook key: ${webhookKey}`);
-            
-            // If not found, try with formatted item (hyphen version)
-            if (!n8nWebhookUrl) {
-              const hyphenFormattedKey = formattedItem.toUpperCase().replace(/-/g, '_');
-              webhookKey = `SCENE_LOCATION_AMBIENCE_${hyphenFormattedKey}_N8N_WEBHOOK`;
-              n8nWebhookUrl = process.env[webhookKey];
-              console.log(`Trying hyphen-formatted webhook key: ${webhookKey}`);
-            }
-            
-            // If still not found, try with capitalized words
-            if (!n8nWebhookUrl) {
-              const words = itemKey.split('_');
-              const capitalizedWords = words.map(word => 
-                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-              ).join('_');
-              
-              webhookKey = `SCENE_LOCATION_AMBIENCE_${capitalizedWords.toUpperCase()}_N8N_WEBHOOK`;
-              n8nWebhookUrl = process.env[webhookKey];
-              console.log(`Trying with capitalized words: ${webhookKey}`);
+          // Search through all environment variables for a matching URL
+          for (const envKey in process.env) {
+            if (process.env[envKey] && 
+                process.env[envKey].includes(fullPattern) && 
+                envKey.includes('N8N_WEBHOOK')) {
+              n8nWebhookUrl = process.env[envKey];
+              webhookKey = envKey;
+              console.log(`Found webhook URL by pattern matching: ${webhookKey} -> ${fullPattern}`);
+              break;
             }
           }
-        } else if (categoryKey === 'shot_style') {
-          // Direct mapping for shot_style to SHOT_STYLE_USE_CASE
-          webhookKey = 'SHOT_STYLE_USE_CASE_N8N_WEBHOOK';
-          n8nWebhookUrl = process.env[webhookKey];
-          console.log(`Trying standard format webhook key: ${webhookKey}`);
-          
-          // If specific item is provided, try with that item directly
-          if (!n8nWebhookUrl && itemKey) {
-            // Try exact match first
-            webhookKey = `SHOT_STYLE_USE_CASE_${itemKey.toUpperCase()}_N8N_WEBHOOK`;
+        }
+        
+        // If still not found, try category-specific formats
+        if (!n8nWebhookUrl) {
+          if (categoryKey === 'scene_loc' || categoryKey === 'scene_location') {
+            // Direct mapping for scene_loc to SCENE_LOCATION_AMBIENCE
+            webhookKey = 'SCENE_LOCATION_AMBIENCE_N8N_WEBHOOK';
             n8nWebhookUrl = process.env[webhookKey];
-            console.log(`Trying exact match webhook key: ${webhookKey}`);
+            console.log(`Trying standard format webhook key: ${webhookKey}`);
             
-            // If not found, try with formatted item (replace underscores with hyphens)
-            if (!n8nWebhookUrl) {
-              const formattedItem = itemKey.replace(/_/g, '-');
-              const hyphenFormattedKey = formattedItem.toUpperCase().replace(/-/g, '_');
-              webhookKey = `SHOT_STYLE_USE_CASE_${hyphenFormattedKey}_N8N_WEBHOOK`;
-              n8nWebhookUrl = process.env[webhookKey];
-              console.log(`Trying hyphen-formatted webhook key: ${webhookKey}`);
-            }
-            
-            // Special handling for hero-banner
-            if (!n8nWebhookUrl && (itemKey.includes('hero') || (cardId && cardId.includes('hero')))) {
-              // Try specific hero banner formats
-              const heroKeys = [
-                'SHOT_STYLE_HERO_BANNER_N8N_WEBHOOK',
-                'HERO_BANNER_N8N_WEBHOOK',
-                'HERO_BANNER_STYLE_N8N_WEBHOOK',
-                'SHOT_HERO_BANNER_N8N_WEBHOOK'
+            // If specific item is provided, try with that item directly
+            if (!n8nWebhookUrl && itemKey) {
+              // Try multiple formats for scene location
+              const sceneLocationFormats = [
+                `SCENE_LOCATION_AMBIENCE_${itemKey.toUpperCase()}_N8N_WEBHOOK`,
+                `SCENE_LOCATION_${itemKey.toUpperCase()}_N8N_WEBHOOK`,
+                `SCENE_LOC_${itemKey.toUpperCase()}_N8N_WEBHOOK`,
+                `SCENE_${itemKey.toUpperCase()}_N8N_WEBHOOK`
               ];
               
-              for (const key of heroKeys) {
-                if (process.env[key]) {
-                  webhookKey = key;
-                  n8nWebhookUrl = process.env[key];
-                  console.log(`Found hero banner webhook using key: ${webhookKey}`);
+              // Try each format
+              for (const format of sceneLocationFormats) {
+                if (process.env[format]) {
+                  webhookKey = format;
+                  n8nWebhookUrl = process.env[format];
+                  console.log(`Found scene location webhook using key: ${webhookKey}`);
                   break;
                 }
               }
+              
+              // If still not found, try with formatted item (hyphen version)
+              if (!n8nWebhookUrl) {
+                const formattedItem = itemKey.replace(/_/g, '-');
+                const hyphenFormattedKey = formattedItem.toUpperCase().replace(/-/g, '_');
+                
+                const hyphenFormats = [
+                  `SCENE_LOCATION_AMBIENCE_${hyphenFormattedKey}_N8N_WEBHOOK`,
+                  `SCENE_LOCATION_${hyphenFormattedKey}_N8N_WEBHOOK`,
+                  `SCENE_LOC_${hyphenFormattedKey}_N8N_WEBHOOK`,
+                  `SCENE_${hyphenFormattedKey}_N8N_WEBHOOK`
+                ];
+                
+                for (const format of hyphenFormats) {
+                  if (process.env[format]) {
+                    webhookKey = format;
+                    n8nWebhookUrl = process.env[format];
+                    console.log(`Found scene location webhook using hyphen key: ${webhookKey}`);
+                    break;
+                  }
+                }
+              }
+              
+              // If still not found, try with capitalized words
+              if (!n8nWebhookUrl) {
+                const words = itemKey.split('_');
+                const capitalizedWords = words.map(word => 
+                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                ).join('_');
+                
+                webhookKey = `SCENE_LOCATION_AMBIENCE_${capitalizedWords.toUpperCase()}_N8N_WEBHOOK`;
+                n8nWebhookUrl = process.env[webhookKey];
+                console.log(`Trying with capitalized words: ${webhookKey}`);
+              }
             }
-          }
-        } else if (categoryKey === 'mood_genre') {
-          // Direct mapping for mood_genre to MOOD_GENRE_FINISHES
-          webhookKey = 'MOOD_GENRE_FINISHES_N8N_WEBHOOK';
-          n8nWebhookUrl = process.env[webhookKey];
-          console.log(`Trying standard format webhook key: ${webhookKey}`);
-          
-          // If specific item is provided, try with that item directly
-          if (!n8nWebhookUrl && itemKey) {
-            // Try exact match first
-            webhookKey = `MOOD_GENRE_FINISHES_${itemKey.toUpperCase()}_N8N_WEBHOOK`;
+          } else if (categoryKey === 'shot_style') {
+            // Direct mapping for shot_style to SHOT_STYLE_USE_CASE
+            webhookKey = 'SHOT_STYLE_USE_CASE_N8N_WEBHOOK';
             n8nWebhookUrl = process.env[webhookKey];
-            console.log(`Trying exact match webhook key: ${webhookKey}`);
+            console.log(`Trying standard format webhook key: ${webhookKey}`);
             
-            // If not found, try with formatted item (replace underscores with hyphens)
-            if (!n8nWebhookUrl) {
-              const formattedItem = itemKey.replace(/_/g, '-');
-              const hyphenFormattedKey = formattedItem.toUpperCase().replace(/-/g, '_');
-              webhookKey = `MOOD_GENRE_FINISHES_${hyphenFormattedKey}_N8N_WEBHOOK`;
-              n8nWebhookUrl = process.env[webhookKey];
-              console.log(`Trying hyphen-formatted webhook key: ${webhookKey}`);
+            // If specific item is provided, try with that item directly
+            if (!n8nWebhookUrl && itemKey) {
+              // Try multiple formats for shot style
+              const shotStyleFormats = [
+                `SHOT_STYLE_USE_CASE_${itemKey.toUpperCase()}_N8N_WEBHOOK`,
+                `SHOT_STYLE_${itemKey.toUpperCase()}_N8N_WEBHOOK`,
+                `SHOT_${itemKey.toUpperCase()}_N8N_WEBHOOK`
+              ];
+              
+              // Try each format
+              for (const format of shotStyleFormats) {
+                if (process.env[format]) {
+                  webhookKey = format;
+                  n8nWebhookUrl = process.env[format];
+                  console.log(`Found shot style webhook using key: ${webhookKey}`);
+                  break;
+                }
+              }
+              
+              // If not found, try with formatted item (replace underscores with hyphens)
+              if (!n8nWebhookUrl) {
+                const formattedItem = itemKey.replace(/_/g, '-');
+                const hyphenFormattedKey = formattedItem.toUpperCase().replace(/-/g, '_');
+                
+                const hyphenFormats = [
+                  `SHOT_STYLE_USE_CASE_${hyphenFormattedKey}_N8N_WEBHOOK`,
+                  `SHOT_STYLE_${hyphenFormattedKey}_N8N_WEBHOOK`,
+                  `SHOT_${hyphenFormattedKey}_N8N_WEBHOOK`
+                ];
+                
+                for (const format of hyphenFormats) {
+                  if (process.env[format]) {
+                    webhookKey = format;
+                    n8nWebhookUrl = process.env[format];
+                    console.log(`Found shot style webhook using hyphen key: ${webhookKey}`);
+                    break;
+                  }
+                }
+              }
+              
+              // Special handling for hero-banner
+              if (!n8nWebhookUrl && (itemKey.includes('hero') || (cardId && cardId.includes('hero')))) {
+                // Try specific hero banner formats
+                const heroKeys = [
+                  'SHOT_STYLE_HERO_BANNER_N8N_WEBHOOK',
+                  'SHOT_STYLE_USE_CASE_HERO_BANNER_N8N_WEBHOOK',
+                  'HERO_BANNER_N8N_WEBHOOK',
+                  'HERO_BANNER_STYLE_N8N_WEBHOOK',
+                  'SHOT_HERO_BANNER_N8N_WEBHOOK'
+                ];
+                
+                for (const key of heroKeys) {
+                  if (process.env[key]) {
+                    webhookKey = key;
+                    n8nWebhookUrl = process.env[key];
+                    console.log(`Found hero banner webhook using key: ${webhookKey}`);
+                    break;
+                  }
+                }
+              }
+            }
+          } else if (categoryKey === 'mood_genre') {
+            // Try multiple formats for mood genre
+            const moodGenreFormats = [
+              'MOOD_GENRE_FINISHES_N8N_WEBHOOK',
+              'MOOD_GENRE_N8N_WEBHOOK',
+              'MOOD_N8N_WEBHOOK'
+            ];
+            
+            // Try each format
+            for (const format of moodGenreFormats) {
+              if (process.env[format]) {
+                webhookKey = format;
+                n8nWebhookUrl = process.env[format];
+                console.log(`Found mood genre webhook using key: ${webhookKey}`);
+                break;
+              }
+            }
+            
+            // If specific item is provided, try with that item directly
+            if (!n8nWebhookUrl && itemKey) {
+              // Try multiple formats with item
+              const itemFormats = [
+                `MOOD_GENRE_FINISHES_${itemKey.toUpperCase()}_N8N_WEBHOOK`,
+                `MOOD_GENRE_${itemKey.toUpperCase()}_N8N_WEBHOOK`,
+                `MOOD_${itemKey.toUpperCase()}_N8N_WEBHOOK`
+              ];
+              
+              // Try each format
+              for (const format of itemFormats) {
+                if (process.env[format]) {
+                  webhookKey = format;
+                  n8nWebhookUrl = process.env[format];
+                  console.log(`Found mood genre webhook using key: ${webhookKey}`);
+                  break;
+                }
+              }
+              
+              // If not found, try with formatted item (replace underscores with hyphens)
+              if (!n8nWebhookUrl) {
+                const formattedItem = itemKey.replace(/_/g, '-');
+                const hyphenFormattedKey = formattedItem.toUpperCase().replace(/-/g, '_');
+                
+                const hyphenFormats = [
+                  `MOOD_GENRE_FINISHES_${hyphenFormattedKey}_N8N_WEBHOOK`,
+                  `MOOD_GENRE_${hyphenFormattedKey}_N8N_WEBHOOK`,
+                  `MOOD_${hyphenFormattedKey}_N8N_WEBHOOK`
+                ];
+                
+                for (const format of hyphenFormats) {
+                  if (process.env[format]) {
+                    webhookKey = format;
+                    n8nWebhookUrl = process.env[format];
+                    console.log(`Found mood genre webhook using hyphen key: ${webhookKey}`);
+                    break;
+                  }
+                }
+              }
+            }
+          } else if (categoryKey === 'target_channel') {
+            // Try multiple formats for target channel
+            const targetChannelFormats = [
+              'TARGET_CHANNEL_PRESETS_N8N_WEBHOOK',
+              'TARGET_CHANNEL_N8N_WEBHOOK',
+              'CHANNEL_N8N_WEBHOOK'
+            ];
+            
+            // Try each format
+            for (const format of targetChannelFormats) {
+              if (process.env[format]) {
+                webhookKey = format;
+                n8nWebhookUrl = process.env[format];
+                console.log(`Found target channel webhook using key: ${webhookKey}`);
+                break;
+              }
+            }
+            
+            // If specific item is provided, try with that item directly
+            if (!n8nWebhookUrl && itemKey) {
+              // Try multiple formats with item
+              const itemFormats = [
+                `TARGET_CHANNEL_PRESETS_${itemKey.toUpperCase()}_N8N_WEBHOOK`,
+                `TARGET_CHANNEL_${itemKey.toUpperCase()}_N8N_WEBHOOK`,
+                `CHANNEL_${itemKey.toUpperCase()}_N8N_WEBHOOK`
+              ];
+              
+              // Try each format
+              for (const format of itemFormats) {
+                if (process.env[format]) {
+                  webhookKey = format;
+                  n8nWebhookUrl = process.env[format];
+                  console.log(`Found target channel webhook using key: ${webhookKey}`);
+                  break;
+                }
+              }
+              
+              // If not found, try with formatted item (replace underscores with hyphens)
+              if (!n8nWebhookUrl) {
+                const formattedItem = itemKey.replace(/_/g, '-');
+                const hyphenFormattedKey = formattedItem.toUpperCase().replace(/-/g, '_');
+                
+                const hyphenFormats = [
+                  `TARGET_CHANNEL_PRESETS_${hyphenFormattedKey}_N8N_WEBHOOK`,
+                  `TARGET_CHANNEL_${hyphenFormattedKey}_N8N_WEBHOOK`,
+                  `CHANNEL_${hyphenFormattedKey}_N8N_WEBHOOK`
+                ];
+                
+                for (const format of hyphenFormats) {
+                  if (process.env[format]) {
+                    webhookKey = format;
+                    n8nWebhookUrl = process.env[format];
+                    console.log(`Found target channel webhook using hyphen key: ${webhookKey}`);
+                    break;
+                  }
+                }
+              }
+              
+              // Special handling for amazon-flipkart
+              if (!n8nWebhookUrl && (itemKey.includes('amazon') || (cardId && cardId.includes('amazon')))) {
+                const amazonKeys = [
+                  'TARGET_CHANNEL_PRESETS_AMAZON_FLIPKART_LISTING_N8N_WEBHOOK',
+                  'CHANNEL_AMAZON_FLIPKART_N8N_WEBHOOK',
+                  'AMAZON_FLIPKART_N8N_WEBHOOK'
+                ];
+                
+                for (const key of amazonKeys) {
+                  if (process.env[key]) {
+                    webhookKey = key;
+                    n8nWebhookUrl = process.env[key];
+                    console.log(`Found amazon-flipkart webhook using key: ${webhookKey}`);
+                    break;
+                  }
+                }
+              }
             }
           }
         }
