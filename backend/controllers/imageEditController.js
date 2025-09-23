@@ -88,6 +88,19 @@ exports.editImage = async (req, res) => {
       }
       
       // Map cardId to corresponding webhook environment variable
+      // Extract category and item from cardId if not already defined
+      let categoryKey = category || '';
+      let itemKey = item || '';
+      
+      // If category/item not provided, try to extract from cardId
+      if ((!categoryKey || !itemKey) && cardId && cardId.includes('-')) {
+        const parts = cardId.split('-');
+        if (parts.length >= 2) {
+          categoryKey = parts[0];
+          itemKey = parts[1];
+        }
+      }
+      
       // Try multiple formats to find the correct webhook URL
       const possibleWebhookKeys = [
         // Format 1: With CARD prefix and underscore version
@@ -97,12 +110,17 @@ exports.editImage = async (req, res) => {
         // Format 3: Without prefix, underscore version
         `${underscoreVersion.toUpperCase()}_N8N_WEBHOOK`,
         // Format 4: Without prefix, hyphen version converted to underscore
-        `${hyphenVersion.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
-        // Format 5: Category specific format (e.g., SHOT_STYLE_HERO_BANNER)
-        `${categoryKey.toUpperCase()}_${itemKey.toUpperCase()}_${cardId.split('-').slice(2).join('_').toUpperCase()}_N8N_WEBHOOK`,
-        // Format 6: Direct match with cardId
-        `${cardId.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`
+        `${hyphenVersion.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`
       ];
+      
+      // Add category specific formats if category and item are available
+      if (categoryKey && itemKey) {
+        // Format 5: Category specific format (e.g., SHOT_STYLE_HERO_BANNER)
+        possibleWebhookKeys.push(`${categoryKey.toUpperCase()}_${itemKey.toUpperCase()}_${cardId.split('-').slice(2).join('_').toUpperCase()}_N8N_WEBHOOK`);
+      }
+      
+      // Format 6: Direct match with cardId
+      possibleWebhookKeys.push(`${cardId.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`);
       
       // Try each possible webhook key
       for (const key of possibleWebhookKeys) {
