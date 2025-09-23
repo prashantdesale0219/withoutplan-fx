@@ -130,23 +130,23 @@ export default function Analytics() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white rounded-lg shadow p-4">
               <h3 className="text-sm font-medium text-gray-500 mb-1">Total Users</h3>
-              <p className="text-2xl font-bold text-indigo-600">{analytics.userStats.total}</p>
+              <p className="text-2xl font-bold text-indigo-600">{analytics?.userStats?.total || 0}</p>
               <p className="text-xs text-gray-500 mt-1">
-                <span className="text-green-500">+{analytics.userStats.new}</span> new users
+                <span className="text-green-500">+{analytics?.userStats?.new || 0}</span> new users
               </p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <h3 className="text-sm font-medium text-gray-500 mb-1">Media Generated</h3>
-              <p className="text-2xl font-bold text-indigo-600">{analytics.mediaStats.totalGenerated}</p>
+              <p className="text-2xl font-bold text-indigo-600">{analytics?.mediaStats?.totalGenerated || 0}</p>
               <p className="text-xs text-gray-500 mt-1">
                 Across all users
               </p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <h3 className="text-sm font-medium text-gray-500 mb-1">Credits Used</h3>
-              <p className="text-2xl font-bold text-indigo-600">{analytics.creditStats.totalUsed}</p>
+              <p className="text-2xl font-bold text-indigo-600">{analytics?.creditStats?.totalUsed || 0}</p>
               <p className="text-xs text-gray-500 mt-1">
-                Out of {analytics.creditStats.totalIssued} issued
+                Out of {analytics?.creditStats?.totalIssued || 0} issued
               </p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
@@ -167,7 +167,7 @@ export default function Analytics() {
                 <div className="w-48 h-48 rounded-full border-8 border-indigo-500 relative">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-indigo-600">{analytics.userStats.total}</p>
+                      <p className="text-3xl font-bold text-indigo-600">{analytics?.userStats?.total || 0}</p>
                       <p className="text-xs text-gray-500">Total Users</p>
                     </div>
                   </div>
@@ -176,25 +176,25 @@ export default function Analytics() {
                   <div className="mb-2">
                     <div className="flex items-center">
                       <div className="w-3 h-3 bg-indigo-600 rounded-full mr-2"></div>
-                      <span className="text-sm">Free ({analytics?.userStats?.planDistribution?.free || 0})</span>
+                      <span className="text-sm">Free ({analytics?.userStats?.planDistribution?.Free || 0})</span>
                     </div>
                   </div>
                   <div className="mb-2">
                     <div className="flex items-center">
                       <div className="w-3 h-3 bg-indigo-400 rounded-full mr-2"></div>
-                      <span className="text-sm">Basic ({analytics?.userStats?.planDistribution?.basic || 0})</span>
+                      <span className="text-sm">Basic ({analytics?.userStats?.planDistribution?.Basic || 0})</span>
                     </div>
                   </div>
                   <div className="mb-2">
                     <div className="flex items-center">
                       <div className="w-3 h-3 bg-indigo-300 rounded-full mr-2"></div>
-                      <span className="text-sm">Pro ({analytics?.userStats?.planDistribution?.pro || 0})</span>
+                      <span className="text-sm">Pro ({analytics?.userStats?.planDistribution?.Pro || 0})</span>
                     </div>
                   </div>
                   <div>
                     <div className="flex items-center">
                       <div className="w-3 h-3 bg-indigo-200 rounded-full mr-2"></div>
-                      <span className="text-sm">Enterprise ({analytics?.userStats?.planDistribution?.enterprise || 0})</span>
+                      <span className="text-sm">Enterprise ({analytics?.userStats?.planDistribution?.Enterprise || 0})</span>
                     </div>
                   </div>
                 </div>

@@ -63,24 +63,45 @@ exports.editImage = async (req, res) => {
     let webhookKey = '';
     
     if (cardId) {
+      // Fix cardId format if it contains hyphens (e.g., product-type-jeans)
+      let formattedCardId = cardId;
+      
+      // Check if cardId is in format like "product-type-jeans"
+      const cardParts = cardId.split('-');
+      if (cardParts.length >= 3) {
+        // Reconstruct to proper format for env variable lookup
+        const categoryPart = `${cardParts[0]}_${cardParts[1]}`;
+        const itemPart = cardParts.slice(2).join('_');
+        formattedCardId = `${categoryPart}_${itemPart}`;
+        console.log(`Reformatted cardId from ${cardId} to ${formattedCardId}`);
+      }
+      
       // Map cardId to corresponding webhook environment variable
-      webhookKey = `${cardId.toUpperCase()}_N8N_WEBHOOK`;
+      webhookKey = `${formattedCardId.toUpperCase()}_N8N_WEBHOOK`;
       n8nWebhookUrl = process.env[webhookKey];
       
       if (!n8nWebhookUrl) {
-        console.log(`Webhook URL not found for card: ${cardId}, using default webhook`);
+        console.log(`Webhook URL not found for card: ${cardId} (key: ${webhookKey}), using default webhook`);
         n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
       } else {
         console.log(`Using specific webhook for card ${cardId}: ${webhookKey}`);
       }
     } else if (category && item) {
       // Handle category-based webhook selection
-      const categoryKey = category.toLowerCase().replace(/[^a-z0-9]/g, '_');
-      const itemKey = item.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      // First clean up category and item
+      const cleanCategory = category.replace(/[^a-z0-9-]/gi, '').toLowerCase();
+      const cleanItem = item.replace(/[^a-z0-9-]/gi, '').toLowerCase();
+      
+      // Convert hyphens to underscores for env variable lookup
+      const categoryKey = cleanCategory.replace(/-/g, '_');
+      const itemKey = cleanItem.replace(/-/g, '_');
+      
+      console.log(`Looking for webhook with category: ${categoryKey}, item: ${itemKey}`);
       
       // Try specific category-item webhook first
       webhookKey = `${categoryKey}_${itemKey}_N8N_WEBHOOK`.toUpperCase();
       n8nWebhookUrl = process.env[webhookKey];
+      console.log(`Trying webhook key: ${webhookKey}`);
       
       // If not found, try category-level webhook
       if (!n8nWebhookUrl) {
@@ -121,9 +142,12 @@ exports.editImage = async (req, res) => {
     }
 
     // Prepare webhook payload
+    // Clean image_url from backticks if present
+    const cleanedImageUrl = typeof image_url === 'string' ? image_url.replace(/`/g, '').trim() : image_url;
+    
     const webhookPayload = {
       prompt,
-      image_url,
+      image_url: cleanedImageUrl,
       cardId: cardId || null,
       category: category || null,
       item: item || null,
@@ -133,10 +157,20 @@ exports.editImage = async (req, res) => {
     };
     
     // Send request to n8n webhook
-    console.log(`Sending request to n8n webhook: ${n8nWebhookUrl}`);
+    // Clean webhook URL from backticks if present
+    const cleanedWebhookUrl = typeof n8nWebhookUrl === 'string' ? n8nWebhookUrl.replace(/`/g, '').trim() : n8nWebhookUrl;
+    
+    console.log(`Sending request to n8n webhook: ${cleanedWebhookUrl}`);
     console.log('Request payload:', webhookPayload);
     
-    const response = await axios.post(n8nWebhookUrl, webhookPayload, {
+    // Add recordInfo to payload to fix 422 error
+    webhookPayload.recordInfo = {
+      id: `img_${Date.now()}`,
+      type: 'image',
+      source: webhookPayload.cardId || `${webhookPayload.category}-${webhookPayload.item}`
+    };
+    
+    const response = await axios.post(cleanedWebhookUrl, webhookPayload, {
       timeout: 120000, // wait up to 120 seconds for n8n response
       headers: {
         'Content-Type': 'application/json'

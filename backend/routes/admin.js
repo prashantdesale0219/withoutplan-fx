@@ -34,4 +34,10 @@ router.patch('/users/:id/plan', adminController.updateUserPlan);
 // Admin security log
 router.post('/security/log', adminController.logSecurityAction);
 
+// Environment variables management
+router.get('/environment', adminController.getEnvironmentVariables);
+router.post('/environment', adminController.updateEnvironmentVariables);
+router.post('/environment/variable', adminController.addEnvironmentVariable);
+router.delete('/environment/variable/:key', adminController.deleteEnvironmentVariable);
+
 module.exports = router;

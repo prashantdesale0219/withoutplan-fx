@@ -24,6 +24,7 @@ api.interceptors.request.use(
   error => Promise.reject(error)
 );
 
+
 // Plans API service
 const planApi = {
   // Get all plans (public)

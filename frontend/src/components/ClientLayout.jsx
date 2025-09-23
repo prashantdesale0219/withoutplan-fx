@@ -11,7 +11,7 @@ import { AuthProvider } from "../contexts/AuthContext";
 export default function ClientLayout({ children }) {
   const pathname = usePathname();
   const isDashboard = pathname?.includes('/dashboard') || pathname?.includes('/admin/users') ||       pathname?.includes('/admin/plans') ||
-                     pathname?.includes('/models') || pathname?.includes('/admin/analytics') || pathname?.includes('/admin/dashboard');
+                     pathname?.includes('/models') || pathname?.includes('/admin/analytics') || pathname?.includes('/admin/dashboard') || pathname?.includes('/admin/settings') || pathname?.includes('/admin/environment');
   const isAuthPage = pathname?.includes('/login') || pathname?.includes('/register');
 
   return (

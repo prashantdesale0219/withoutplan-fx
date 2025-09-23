@@ -11,7 +11,8 @@ import {
   BarChart,
   Settings,
   LogOut,
-  CreditCard
+  CreditCard,
+  FileText
 } from 'lucide-react';
 
 const AdminSidebar = () => {
@@ -42,6 +43,12 @@ const AdminSidebar = () => {
       href: '/admin/analytics',
       icon: BarChart,
       current: pathname === '/admin/analytics'
+    },
+    {
+      name: 'Environment',
+      href: '/admin/environment',
+      icon: FileText,
+      current: pathname === '/admin/environment'
     },
     {
       name: 'Settings',

@@ -41,11 +41,11 @@ const ImageEditor = () => {
        
        if (category.includes('product-type')) {
          specificPrompt = `Transform this image to showcase ${itemName} in a professional product photography style`;
-       } else if (category.includes('scene') || category.includes('location')) {
+       } else if (category.includes('scene-loc') || category.includes('scene') || category.includes('location')) {
          specificPrompt = `Transform this image with ${itemName} setting and ambience`;
        } else if (category.includes('shot-style')) {
          specificPrompt = `Transform this image using ${itemName} photography style`;
-       } else if (category.includes('mood') || category.includes('genre')) {
+       } else if (category.includes('mood-genre') || category.includes('mood') || category.includes('genre')) {
          specificPrompt = `Transform this image with ${itemName} mood and aesthetic`;
        } else if (category.includes('target-channel')) {
          specificPrompt = `Transform this image optimized for ${itemName} platform`;
@@ -241,7 +241,7 @@ const ImageEditor = () => {
         
         // First check if resultUrls is directly available in the response
         if (data.data && data.data.resultUrls && data.data.resultUrls.length > 0) {
-          resultImageUrl = data.data.resultUrls[0];
+          resultImageUrl = data.data.resultUrls[0].replace(/`/g, '').trim();
         }
         // If not, try to parse from resultJson
         else if (data.data && data.data.resultJson) {
@@ -250,7 +250,12 @@ const ImageEditor = () => {
               ? data.data.resultJson.replace(/`/g, '').trim() 
               : JSON.stringify(data.data.resultJson);
               
+            // Clean backticks from URLs in JSON string
             resultJsonStr = resultJsonStr.replace(/"\s*`(https?:\/\/[^`]+)`\s*"/g, '"$1"');
+            resultJsonStr = resultJsonStr.replace(/\[\s*"\s*`(https?:\/\/[^`]+)`\s*"\s*\]/g, '["$1"]');
+            resultJsonStr = resultJsonStr.replace(/\[\s*`(https?:\/\/[^`]+)`\s*\]/g, '["$1"]');
+            
+            console.log('Cleaned resultJsonStr:', resultJsonStr);
             
             const resultJson = JSON.parse(resultJsonStr);
             
@@ -263,10 +268,18 @@ const ImageEditor = () => {
             console.error('Error parsing resultJson:', err);
             
             if (typeof data.data.resultJson === 'string') {
-              const urlRegex = /(https?:\/\/[^\s`"']+\.(jpg|jpeg|png|gif|webp))/i;
-              const match = data.data.resultJson.match(urlRegex);
-              if (match && match[0]) {
-                resultImageUrl = match[0].trim();
+              // Try to extract URL with backticks
+              const backtickUrlRegex = /`(https?:\/\/[^`]+)`/i;
+              const backtickMatch = data.data.resultJson.match(backtickUrlRegex);
+              if (backtickMatch && backtickMatch[1]) {
+                resultImageUrl = backtickMatch[1].trim();
+              } else {
+                // Try regular URL extraction
+                const urlRegex = /(https?:\/\/[^\s`"']+\.(jpg|jpeg|png|gif|webp))/i;
+                const match = data.data.resultJson.match(urlRegex);
+                if (match && match[0]) {
+                  resultImageUrl = match[0].trim();
+                }
               }
             }
           }

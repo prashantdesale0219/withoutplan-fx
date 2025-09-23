@@ -770,12 +770,18 @@ exports.getAnalytics = async (req, res) => {
   try {
     // Get total users count
     const totalUsers = await User.countDocuments({ role: 'user' });
+    const activeUsers = await User.countDocuments({ role: 'user', lastLogin: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } });
+    const newUsers = await User.countDocuments({ role: 'user', createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } });
     
     // Get users by plan
     const freeUsers = await User.countDocuments({ role: 'user', plan: 'free' });
     const basicUsers = await User.countDocuments({ role: 'user', plan: 'basic' });
     const proUsers = await User.countDocuments({ role: 'user', plan: 'pro' });
     const enterpriseUsers = await User.countDocuments({ role: 'user', plan: 'enterprise' });
+    
+    // Get terms acceptance rate
+    const termsAcceptedUsers = await User.countDocuments({ role: 'user', termsAccepted: true });
+    const termsAcceptanceRate = totalUsers > 0 ? termsAcceptedUsers / totalUsers : 0;
     
     // Get recent payments
     const recentPayments = await Payment.find()
@@ -787,21 +793,66 @@ exports.getAnalytics = async (req, res) => {
     const payments = await Payment.find();
     const totalRevenue = payments.reduce((acc, payment) => acc + (payment.amount || 0), 0);
     
+    // Calculate media stats (from user credits)
+    const users = await User.find({ role: 'user' });
+    const mediaStats = {
+      images: users.reduce((acc, user) => acc + (user.credits?.imagesGenerated || 0), 0),
+      videos: users.reduce((acc, user) => acc + (user.credits?.videosGenerated || 0), 0),
+      scenes: users.reduce((acc, user) => acc + (user.credits?.scenesGenerated || 0), 0)
+    };
+    mediaStats.totalGenerated = mediaStats.images + mediaStats.videos + mediaStats.scenes;
+    
+    // Calculate credit stats
+    const creditStats = {
+      totalIssued: users.reduce((acc, user) => acc + (user.credits?.totalPurchased || 0), 0),
+      totalUsed: users.reduce((acc, user) => acc + (user.credits?.totalUsed || 0), 0),
+      byPlan: {
+        Free: { 
+          issued: users.filter(u => u.plan === 'free').reduce((acc, user) => acc + (user.credits?.totalPurchased || 0), 0),
+          used: users.filter(u => u.plan === 'free').reduce((acc, user) => acc + (user.credits?.totalUsed || 0), 0)
+        },
+        Basic: { 
+          issued: users.filter(u => u.plan === 'basic').reduce((acc, user) => acc + (user.credits?.totalPurchased || 0), 0),
+          used: users.filter(u => u.plan === 'basic').reduce((acc, user) => acc + (user.credits?.totalUsed || 0), 0)
+        },
+        Pro: { 
+          issued: users.filter(u => u.plan === 'pro').reduce((acc, user) => acc + (user.credits?.totalPurchased || 0), 0),
+          used: users.filter(u => u.plan === 'pro').reduce((acc, user) => acc + (user.credits?.totalUsed || 0), 0)
+        },
+        Enterprise: { 
+          issued: users.filter(u => u.plan === 'enterprise').reduce((acc, user) => acc + (user.credits?.totalPurchased || 0), 0),
+          used: users.filter(u => u.plan === 'enterprise').reduce((acc, user) => acc + (user.credits?.totalUsed || 0), 0)
+        }
+      }
+    };
+    
+    // Calculate revenue by plan
+    const revenueByPlan = {
+      Basic: payments.filter(p => p.plan === 'basic').reduce((acc, payment) => acc + (payment.amount || 0), 0),
+      Pro: payments.filter(p => p.plan === 'pro').reduce((acc, payment) => acc + (payment.amount || 0), 0),
+      Enterprise: payments.filter(p => p.plan === 'enterprise').reduce((acc, payment) => acc + (payment.amount || 0), 0)
+    };
+    
     return res.status(200).json({
       success: true,
       data: {
         userStats: {
           total: totalUsers,
-          byPlan: {
-            free: freeUsers,
-            basic: basicUsers,
-            pro: proUsers,
-            enterprise: enterpriseUsers
-          }
+          active: activeUsers,
+          new: newUsers,
+          planDistribution: {
+            Free: freeUsers,
+            Basic: basicUsers,
+            Pro: proUsers,
+            Enterprise: enterpriseUsers
+          },
+          termsAcceptanceRate
         },
-        financialStats: {
-          totalRevenue,
-          recentPayments
+        mediaStats,
+        creditStats,
+        revenueStats: {
+          total: totalRevenue,
+          byPlan: revenueByPlan
         }
       }
     });
@@ -942,7 +993,209 @@ exports.logSecurityAction = async (req, res) => {
     console.error('Error logging security action:', error);
     return res.status(500).json({
       success: false,
-      message: 'Server error while logging security action'
+      message: 'Error logging security action'
+    });
+  }
+};
+
+/**
+ * Get environment variables
+ * @route GET /api/admin/env
+ * @access Private (Admin only)
+ */
+exports.getEnvironmentVariables = async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const dotenv = require('dotenv');
+    
+    // Read .env file
+    const envPath = path.resolve(process.cwd(), '.env');
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    
+    // Parse .env content
+    const envConfig = dotenv.parse(envContent);
+    
+    // Convert to array format for frontend
+    const envVariables = Object.keys(envConfig).map(key => ({
+      key,
+      value: envConfig[key]
+    }));
+    
+    res.status(200).json({
+      status: 'success',
+      data: envVariables
+    });
+  } catch (error) {
+    console.error('Error fetching environment variables:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error fetching environment variables'
+    });
+  }
+};
+
+/**
+ * Update environment variables
+ * @route PUT /api/admin/env
+ * @access Private (Admin only)
+ */
+exports.updateEnvironmentVariables = async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    
+    const { variables } = req.body;
+    
+    if (!variables || !Array.isArray(variables)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid variables format'
+      });
+    }
+    
+    // Read .env file
+    const envPath = path.resolve(process.cwd(), '.env');
+    
+    // Create .env content
+    let envContent = '';
+    variables.forEach(variable => {
+      envContent += `${variable.key}=${variable.value}\n`;
+    });
+    
+    // Write to .env file
+    fs.writeFileSync(envPath, envContent);
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'Environment variables updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating environment variables:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error updating environment variables'
+    });
+  }
+};
+
+/**
+ * Add a new environment variable
+ * @route POST /api/admin/env/variable
+ * @access Private (Admin only)
+ */
+exports.addEnvironmentVariable = async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const dotenv = require('dotenv');
+    
+    const { key, value } = req.body;
+    
+    if (!key || value === undefined) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Key and value are required'
+      });
+    }
+    
+    // Read .env file
+    const envPath = path.resolve(process.cwd(), '.env');
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    
+    // Parse .env content
+    const envConfig = dotenv.parse(envContent);
+    
+    // Check if key already exists
+    if (envConfig[key]) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Environment variable already exists'
+      });
+    }
+    
+    // Add new variable
+    envConfig[key] = value;
+    
+    // Create updated .env content
+    let updatedEnvContent = '';
+    Object.keys(envConfig).forEach(envKey => {
+      updatedEnvContent += `${envKey}=${envConfig[envKey]}\n`;
+    });
+    
+    // Write to .env file
+    fs.writeFileSync(envPath, updatedEnvContent);
+    
+    res.status(201).json({
+      status: 'success',
+      message: 'Environment variable added successfully',
+      data: { key, value }
+    });
+  } catch (error) {
+    console.error('Error adding environment variable:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error adding environment variable'
+    });
+  }
+};
+
+/**
+ * Delete an environment variable
+ * @route DELETE /api/admin/env/variable/:key
+ * @access Private (Admin only)
+ */
+exports.deleteEnvironmentVariable = async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const dotenv = require('dotenv');
+    
+    const { key } = req.params;
+    
+    if (!key) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Key parameter is required'
+      });
+    }
+    
+    // Read .env file
+    const envPath = path.resolve(process.cwd(), '.env');
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    
+    // Parse .env content
+    const envConfig = dotenv.parse(envContent);
+    
+    // Check if key exists
+    if (!envConfig[key]) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Environment variable not found'
+      });
+    }
+    
+    // Remove the variable
+    delete envConfig[key];
+    
+    // Create updated .env content
+    let updatedEnvContent = '';
+    Object.keys(envConfig).forEach(envKey => {
+      updatedEnvContent += `${envKey}=${envConfig[envKey]}\n`;
+    });
+    
+    // Write to .env file
+    fs.writeFileSync(envPath, updatedEnvContent);
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'Environment variable deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting environment variable:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error deleting environment variable'
     });
   }
 };

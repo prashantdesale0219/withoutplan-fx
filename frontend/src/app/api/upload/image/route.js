@@ -11,7 +11,7 @@ export async function POST(request) {
     const formData = await request.formData();
     
     // Forward the request to the backend
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
     console.log(`Forwarding upload to backend: ${backendUrl}/api/upload/image`);
     
     const response = await fetch(`${backendUrl}/api/upload/image`, {

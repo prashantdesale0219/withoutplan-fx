@@ -83,10 +83,32 @@ const AppsContent = () => {
   ];
   
   const handleCardClick = (categoryTitle, item) => {
+    // Format category and item for proper webhook mapping
+    let category = '';
+    
+    // Map category titles to their corresponding webhook category prefixes
+    if (categoryTitle === "Product Type") {
+      category = 'product-type';
+    } else if (categoryTitle === "Scene / Location / Ambience") {
+      category = 'scene-loc';
+    } else if (categoryTitle === "Shot Style / Use Case") {
+      category = 'shot-style';
+    } else if (categoryTitle === "Mood / Genre / Finishes") {
+      category = 'mood-genre';
+    } else if (categoryTitle === "Target Channel Presets") {
+      category = 'target-channel';
+    } else {
+      // Default fallback
+      category = categoryTitle.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    }
+    
+    // Format item name for webhook mapping
+    const itemSlug = item.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    
     // Navigate to image editor with category and item info
     const params = new URLSearchParams({
-      category: categoryTitle.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-      item: item.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+      category: category,
+      item: itemSlug,
       type: 'category'
     });
     router.push(`/dashboard/image-editor?${params.toString()}`);

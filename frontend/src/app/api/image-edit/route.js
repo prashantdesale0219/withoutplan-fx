@@ -9,6 +9,12 @@ export async function POST(request) {
     }
 
     const requestData = await request.json();
+    
+    // Clean image_url from backticks if present
+    if (requestData.image_url && typeof requestData.image_url === 'string') {
+      requestData.image_url = requestData.image_url.replace(/`/g, '').trim();
+    }
+    
     console.log('Frontend API received image-edit request:', requestData);
     
     // Validate input data
@@ -32,7 +38,7 @@ export async function POST(request) {
     }
 
     // Forward the request to the backend
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
     console.log(`Forwarding to backend: ${backendUrl}/api/image-edit`);
     
     const response = await axios.post(
