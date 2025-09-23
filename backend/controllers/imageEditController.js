@@ -108,11 +108,19 @@ exports.editImage = async (req, res) => {
         webhookKey = `${categoryKey}_PRESETS_${itemKey}_N8N_WEBHOOK`.toUpperCase();
         n8nWebhookUrl = process.env[webhookKey];
         console.log(`Trying alternative webhook key: ${webhookKey}`);
+        
+        // If still not found, try with just PRESETS
+        if (!n8nWebhookUrl) {
+          webhookKey = `TARGET_CHANNEL_PRESETS_${itemKey}_N8N_WEBHOOK`.toUpperCase();
+          n8nWebhookUrl = process.env[webhookKey];
+          console.log(`Trying with TARGET_CHANNEL_PRESETS_ prefix: ${webhookKey}`);
+        }
       }
       
       // If not found, try with special formats for other categories
       if (!n8nWebhookUrl) {
         if (categoryKey === 'scene_loc') {
+          // First try the standard format
           webhookKey = 'SCENE_LOCATION_AMBIENCE_N8N_WEBHOOK';
           n8nWebhookUrl = process.env[webhookKey];
           console.log(`Trying special format webhook key: ${webhookKey}`);
@@ -124,15 +132,42 @@ exports.editImage = async (req, res) => {
             webhookKey = `SCENE_LOCATION_AMBIENCE_${itemKey.toUpperCase()}_N8N_WEBHOOK`;
             n8nWebhookUrl = process.env[webhookKey];
             console.log(`Trying specific scene location webhook key: ${webhookKey}`);
+            
+            // If still not found, try with words separated by underscores
+            if (!n8nWebhookUrl) {
+              // Split by underscore and capitalize each word
+              const words = itemKey.split('_');
+              const capitalizedWords = words.map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join('_');
+              
+              webhookKey = `SCENE_LOCATION_AMBIENCE_${capitalizedWords.toUpperCase()}_N8N_WEBHOOK`;
+              n8nWebhookUrl = process.env[webhookKey];
+              console.log(`Trying with capitalized words: ${webhookKey}`);
+            }
           }
         } else if (categoryKey === 'shot_style') {
           webhookKey = 'SHOT_STYLE_USE_CASE_N8N_WEBHOOK';
           n8nWebhookUrl = process.env[webhookKey];
           console.log(`Trying special format webhook key: ${webhookKey}`);
+          
+          // Try with specific shot style if available
+          if (!n8nWebhookUrl && itemKey) {
+            webhookKey = `SHOT_STYLE_USE_CASE_${itemKey.toUpperCase()}_N8N_WEBHOOK`;
+            n8nWebhookUrl = process.env[webhookKey];
+            console.log(`Trying specific shot style webhook key: ${webhookKey}`);
+          }
         } else if (categoryKey === 'mood_genre') {
           webhookKey = 'MOOD_GENRE_FINISHES_N8N_WEBHOOK';
           n8nWebhookUrl = process.env[webhookKey];
           console.log(`Trying special format webhook key: ${webhookKey}`);
+          
+          // Try with specific mood genre if available
+          if (!n8nWebhookUrl && itemKey) {
+            webhookKey = `MOOD_GENRE_FINISHES_${itemKey.toUpperCase()}_N8N_WEBHOOK`;
+            n8nWebhookUrl = process.env[webhookKey];
+            console.log(`Trying specific mood genre webhook key: ${webhookKey}`);
+          }
         }
       }
       
@@ -186,6 +221,9 @@ exports.editImage = async (req, res) => {
     // Clean image_url from backticks if present
     const cleanedImageUrl = typeof image_url === 'string' ? image_url.replace(/`/g, '').trim() : image_url;
     
+    // Log the final webhook being used
+    console.log(`Using webhook URL: ${n8nWebhookUrl} (${webhookKey})`);
+    
     const webhookPayload = {
       prompt,
       image_url: cleanedImageUrl,
@@ -198,6 +236,12 @@ exports.editImage = async (req, res) => {
       recordInfo: {
         id: `img_${Date.now()}`,
         type: 'image',
+        source: 'fashionx',
+        userId: req.user.id,
+        userName: user.name,
+        userEmail: user.email,
+        category: category || null,
+        item: item || null,
         source: cardId || `${category}-${item}`
       }
     };
