@@ -358,6 +358,26 @@ exports.editImage = async (req, res) => {
                   }
                 }
               }
+              
+              // Special handling for lookbook style
+              if (!n8nWebhookUrl && (itemKey.includes('lookbook') || (cardId && cardId.includes('lookbook')))) {
+                // Try specific lookbook formats
+                const lookbookKeys = [
+                  'SHOT_STYLE_LOOKBOOK_FULL_BODY_N8N_WEBHOOK',
+                  'SHOT_STYLE_LOOKBOOK_N8N_WEBHOOK',
+                  'LOOKBOOK_FULL_BODY_N8N_WEBHOOK',
+                  'LOOKBOOK_N8N_WEBHOOK'
+                ];
+                
+                for (const key of lookbookKeys) {
+                  if (process.env[key]) {
+                    webhookKey = key;
+                    n8nWebhookUrl = process.env[key];
+                    console.log(`Found lookbook webhook using key: ${webhookKey}`);
+                    break;
+                  }
+                }
+              }
             }
           } else if (categoryKey === 'mood_genre') {
             // Try multiple formats for mood genre
