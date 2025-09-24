@@ -383,21 +383,21 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
 
           {!showEmailForm ? (
             <div className="space-y-4">
-              <button
+              {/* <button
                 onClick={handleGoogleAuth}
                 className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-full py-3 px-4 hover:bg-gray-50 transition-colors text-gray-900 font-medium"
               >
                 <FcGoogle size={20} />
                 <span>Continue with Google</span>
-              </button>
+              </button> */}
               
-              <button
+              {/* <button
                 onClick={handleAppleAuth}
                 className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-full py-3 px-4 hover:bg-gray-50 transition-colors text-gray-900 font-medium"
               >
                 <FaApple size={20} />
                 <span>Continue with Apple</span>
-              </button>
+              </button> */}
               
               <button
                 onClick={() => setShowEmailForm(true)}
