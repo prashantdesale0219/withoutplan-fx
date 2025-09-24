@@ -93,16 +93,53 @@ exports.editImage = async (req, res) => {
       let itemKey = item || '';
       
       // If category/item not provided, try to extract from cardId
-      if ((!categoryKey || !itemKey) && cardId && cardId.includes('-')) {
-        const parts = cardId.split('-');
-        if (parts.length >= 2) {
-          categoryKey = parts[0];
-          itemKey = parts[1];
+      if ((!categoryKey || !itemKey) && cardId) {
+        if (cardId.includes('-')) {
+          const parts = cardId.split('-');
+          if (parts.length >= 2) {
+            // For hyphenated format like "product-type-jeans"
+            categoryKey = `${parts[0]}_${parts[1]}`;
+            itemKey = parts.slice(2).join('_');
+            
+            // If no item part, adjust accordingly
+            if (parts.length === 2) {
+              categoryKey = parts[0];
+              itemKey = parts[1];
+            }
+          }
+        } else if (cardId.includes('_')) {
+          const parts = cardId.split('_');
+          if (parts.length >= 2) {
+            // For underscore format like "product_type_jeans"
+            categoryKey = `${parts[0]}_${parts[1]}`;
+            itemKey = parts.slice(2).join('_');
+            
+            // If no item part, adjust accordingly
+            if (parts.length === 2) {
+              categoryKey = parts[0];
+              itemKey = parts[1];
+            }
+          }
         }
       }
       
+      // Convert category key to standard format
+      if (categoryKey === 'scene' || categoryKey === 'location') {
+        categoryKey = 'scene_loc';
+      } else if (categoryKey === 'shot' || categoryKey === 'style') {
+        categoryKey = 'shot_style';
+      } else if (categoryKey === 'mood' || categoryKey === 'genre') {
+        categoryKey = 'mood_genre';
+      } else if (categoryKey === 'target' || categoryKey === 'channel') {
+        categoryKey = 'target_channel';
+      } else if (categoryKey === 'product' || categoryKey === 'type') {
+        categoryKey = 'product_type';
+      }
+      
+      console.log(`Using category: ${categoryKey}, item: ${itemKey} from cardId: ${cardId}`);
+      
       // Try multiple formats to find the correct webhook URL
-      const possibleWebhookKeys = [
+      let possibleWebhookKeys = [
         // Format 1: With CARD prefix and underscore version
         `CARD${underscoreVersion.toUpperCase()}_N8N_WEBHOOK`,
         // Format 2: With CARD prefix and hyphen version
@@ -112,6 +149,100 @@ exports.editImage = async (req, res) => {
         // Format 4: Without prefix, hyphen version converted to underscore
         `${hyphenVersion.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`
       ];
+      
+      // First try direct pattern matching based on category
+       if (categoryKey && itemKey) {
+         // Scene Location patterns
+         if (categoryKey === 'scene_loc' || categoryKey.includes('scene') || categoryKey.includes('location')) {
+           possibleWebhookKeys = [
+             ...possibleWebhookKeys,
+             `SCENE_LOCATION_AMBIENCE_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             `SCENE_LOCATION_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             `SCENE_LOC_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             `SCENE_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             'SCENE_LOCATION_AMBIENCE_N8N_WEBHOOK',
+             'SCENE_LOCATION_N8N_WEBHOOK',
+             'SCENE_LOC_N8N_WEBHOOK'
+           ];
+         }
+         
+         // Shot Style patterns
+         if (categoryKey === 'shot_style' || categoryKey.includes('shot') || categoryKey.includes('style')) {
+           possibleWebhookKeys = [
+             ...possibleWebhookKeys,
+             `SHOT_STYLE_USE_CASE_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             `SHOT_STYLE_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             `SHOT_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             'SHOT_STYLE_USE_CASE_N8N_WEBHOOK',
+             'SHOT_STYLE_N8N_WEBHOOK'
+           ];
+           
+           // Special handling for lookbook
+           if (itemKey.includes('lookbook') || (cardId && cardId.includes('lookbook'))) {
+             possibleWebhookKeys = [
+               ...possibleWebhookKeys,
+               'SHOT_STYLE_USE_CASE_LOOKBOOK_FULL_BODY_N8N_WEBHOOK',
+               'LOOKBOOK_FULL_BODY_N8N_WEBHOOK',
+               'LOOKBOOK_N8N_WEBHOOK'
+             ];
+           }
+           
+           // Special handling for hero-banner
+           if (itemKey.includes('hero') || itemKey.includes('banner') || (cardId && (cardId.includes('hero') || cardId.includes('banner')))) {
+             possibleWebhookKeys = [
+               ...possibleWebhookKeys,
+               'SHOT_STYLE_USE_CASE_HERO_BANNER_N8N_WEBHOOK',
+               'HERO_BANNER_N8N_WEBHOOK'
+             ];
+           }
+         }
+         
+         // Mood Genre patterns
+         if (categoryKey === 'mood_genre' || categoryKey.includes('mood') || categoryKey.includes('genre')) {
+           possibleWebhookKeys = [
+             ...possibleWebhookKeys,
+             `MOOD_GENRE_FINISHES_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             `MOOD_GENRE_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             `MOOD_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             'MOOD_GENRE_FINISHES_N8N_WEBHOOK',
+             'MOOD_GENRE_N8N_WEBHOOK'
+           ];
+         }
+         
+         // Target Channel patterns
+         if (categoryKey === 'target_channel' || categoryKey.includes('target') || categoryKey.includes('channel')) {
+           possibleWebhookKeys = [
+             ...possibleWebhookKeys,
+             `TARGET_CHANNEL_PRESETS_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             `TARGET_CHANNEL_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             `CHANNEL_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             'TARGET_CHANNEL_PRESETS_N8N_WEBHOOK',
+             'TARGET_CHANNEL_N8N_WEBHOOK'
+           ];
+           
+           // Special handling for amazon-flipkart
+           if (itemKey.includes('amazon') || itemKey.includes('flipkart') || (cardId && (cardId.includes('amazon') || cardId.includes('flipkart')))) {
+             possibleWebhookKeys = [
+               ...possibleWebhookKeys,
+               'TARGET_CHANNEL_PRESETS_AMAZON_FLIPKART_LISTING_N8N_WEBHOOK',
+               'AMAZON_FLIPKART_LISTING_N8N_WEBHOOK',
+               'AMAZON_FLIPKART_N8N_WEBHOOK'
+             ];
+           }
+         }
+         
+         // Product Type patterns
+         if (categoryKey === 'product_type' || categoryKey.includes('product') || categoryKey.includes('type')) {
+           possibleWebhookKeys = [
+             ...possibleWebhookKeys,
+             `PRODUCT_TYPE_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
+             'PRODUCT_TYPE_N8N_WEBHOOK'
+           ];
+         }
+       }
+      
+      // Remove duplicates
+      possibleWebhookKeys = [...new Set(possibleWebhookKeys)];
       
       // Add category specific formats if category and item are available
       if (categoryKey && itemKey) {
@@ -123,6 +254,7 @@ exports.editImage = async (req, res) => {
       possibleWebhookKeys.push(`${cardId.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`);
       
       // Try each possible webhook key
+      console.log('Trying to find webhook URL with these possible keys:', possibleWebhookKeys);
       for (const key of possibleWebhookKeys) {
         if (process.env[key]) {
           webhookKey = key;
@@ -130,6 +262,10 @@ exports.editImage = async (req, res) => {
           console.log(`Found webhook URL using key: ${webhookKey}`);
           break;
         }
+      }
+      
+      if (!n8nWebhookUrl) {
+        console.log('No webhook URL found, using default');
       }
       
       if (!n8nWebhookUrl) {
