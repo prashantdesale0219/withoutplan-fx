@@ -174,7 +174,7 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
               // If user doesn't have credits or has never selected a plan before
               if (userData.credits === 0 || (!userData.planActivatedAt && userData.plan === 'free')) {
                 
-                const planResponse = await api.post('/plans/select', { plan: 'free' });
+                const planResponse = await api.post('/api/plans/select', { planId: 'free' });
                 
                 if (planResponse.data.success) {
                   // Update user data in local storage with new plan info

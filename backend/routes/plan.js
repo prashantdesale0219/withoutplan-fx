@@ -14,11 +14,13 @@ const {
 
 // Public routes
 router.get('/', getPlans);
-router.get('/:id', getPlanById);
 
 // Protected routes
 router.post('/select', protect, selectPlan);
 router.get('/current', protect, getCurrentPlan);
+
+// Public route with parameter - must be after specific routes
+router.get('/:id', getPlanById);
 
 // Admin routes
 router.post('/admin', protect, admin, createPlan);

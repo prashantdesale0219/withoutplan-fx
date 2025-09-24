@@ -494,28 +494,28 @@ export default function UserDetail({ params }) {
                     </div>
                   <div>
                     <p className="text-xs text-gray-500 font-medium">Credits</p>
-                    <p className="text-sm font-medium">
-                      {formatCreditDisplay(getUserCredits(user))}
-                      <span className="text-xs text-gray-500 ml-1">({Math.round(calculateCreditUsage(getUserCredits(user)))}% used)</span>
-                    </p>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
-                      <div 
-                        className={`${getCreditColorClass(calculateCreditUsage(getUserCredits(user)))} h-2.5 rounded-full`}
-                        style={{ width: `${calculateCreditUsage(getUserCredits(user))}%` }}
-                      ></div>
+                    <div className="flex justify-between items-center mt-1">
+                      <p className="text-sm font-bold text-blue-600">
+                        Available: <span className="text-lg">{user.credits?.balance || 0}</span>
+                      </p>
+                      <p className="text-sm font-medium">
+                        Total: <span className="font-bold">{user.credits?.totalPurchased || 0}</span>
+                      </p>
                     </div>
-                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                    
+                    
+                    <div className="mt-3 grid grid-cols-3 gap-2 bg-gray-50 p-2 rounded-md border border-gray-200">
                       <div>
-                        <span className="text-gray-500">Total: </span>
-                        <span className="font-medium">{user.credits?.totalPurchased || 0}</span>
+                        <span className="text-xs text-gray-500 block">Images:</span>
+                        <span className="font-medium text-sm">{user.credits?.imagesGenerated || 0}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Used: </span>
-                        <span className="font-medium">{user.credits?.totalUsed || 0}</span>
+                        <span className="text-xs text-gray-500 block">Videos:</span>
+                        <span className="font-medium text-sm">{user.credits?.videosGenerated || 0}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Balance: </span>
-                        <span className="font-medium">{user.credits?.balance || 0}</span>
+                        <span className="text-xs text-gray-500 block">Scenes:</span>
+                        <span className="font-medium text-sm">{user.credits?.scenesGenerated || 0}</span>
                       </div>
                     </div>
                   </div>

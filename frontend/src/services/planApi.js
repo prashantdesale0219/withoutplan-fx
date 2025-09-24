@@ -50,7 +50,7 @@ const planApi = {
   // Get current user's plan (requires auth)
   getCurrentPlan: async () => {
     try {
-      const response = await api.get('/plans/current');
+      const response = await api.get('/api/plans/current');
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch current plan' };
