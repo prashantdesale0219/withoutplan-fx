@@ -55,7 +55,7 @@ const ImageEditorPage = () => {
            
            <div className=' items-center max-w-8xl'>
             <div className='w-full'><ImageEditor/></div>
-            <div className='w-full'><Apps/></div>
+            {/* <div className='w-full'><Apps/></div> */}
              
             </div>
           </div>

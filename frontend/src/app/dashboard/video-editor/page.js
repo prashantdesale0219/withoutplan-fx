@@ -55,7 +55,7 @@ const VideoEditorPage = () => {
            
            <div className='f items-center max-w-8xl'>
             <div className='w-full'><VideoEditor/></div>
-            <div className='w-full'><Apps/></div>
+            {/* <div className='w-full'><Apps/></div> */}
              
             </div>
           </div>
