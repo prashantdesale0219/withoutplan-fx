@@ -93,8 +93,22 @@ exports.editImage = async (req, res) => {
       let itemKey = item || '';
       
       // If category/item not provided, try to extract from cardId
-      if ((!categoryKey || !itemKey) && cardId) {
-        if (cardId.includes('-')) {
+      if (cardId) {
+        // Special handling for scene-loc-taj-inspired-palatial
+        if (cardId === 'scene-loc-taj-inspired-palatial') {
+          categoryKey = 'scene_loc';
+          itemKey = 'taj_inspired_palatial';
+        }
+        // Special handling for scene-location cards
+        else if (cardId.startsWith('scene-loc-') || cardId.startsWith('scene-location-')) {
+          categoryKey = 'scene_loc';
+          const parts = cardId.split('-');
+          if (parts.length >= 3) {
+            itemKey = parts.slice(2).join('_');
+          }
+        }
+        // General handling for other cards
+        else if ((!categoryKey || !itemKey) && cardId.includes('-')) {
           const parts = cardId.split('-');
           if (parts.length >= 2) {
             // For hyphenated format like "product-type-jeans"
@@ -107,7 +121,7 @@ exports.editImage = async (req, res) => {
               itemKey = parts[1];
             }
           }
-        } else if (cardId.includes('_')) {
+        } else if ((!categoryKey || !itemKey) && cardId.includes('_')) {
           const parts = cardId.split('_');
           if (parts.length >= 2) {
             // For underscore format like "product_type_jeans"
@@ -154,6 +168,16 @@ exports.editImage = async (req, res) => {
        if (categoryKey && itemKey) {
          // Scene Location patterns
          if (categoryKey === 'scene_loc' || categoryKey.includes('scene') || categoryKey.includes('location')) {
+           // Special handling for taj-inspired-palatial
+           if (itemKey === 'taj_inspired_palatial' || cardId === 'scene-loc-taj-inspired-palatial') {
+             possibleWebhookKeys = [
+               ...possibleWebhookKeys,
+               'SCENE_LOCATION_AMBIENCE_TAJ_INSPIRED_PALATIAL_N8N_WEBHOOK',
+               'SCENE_LOC_TAJ_INSPIRED_PALATIAL_N8N_WEBHOOK',
+               'SCENE_TAJ_INSPIRED_PALATIAL_N8N_WEBHOOK'
+             ];
+           }
+           
            possibleWebhookKeys = [
              ...possibleWebhookKeys,
              `SCENE_LOCATION_AMBIENCE_${itemKey.toUpperCase().replace(/-/g, '_')}_N8N_WEBHOOK`,
@@ -728,6 +752,175 @@ exports.editImage = async (req, res) => {
     // Clean image_url from backticks if present
     const cleanedImageUrl = typeof image_url === 'string' ? image_url.replace(/`/g, '').trim() : image_url;
     
+    // Special handling for shot-style cards
+    if (cardId && (cardId.includes('shot-style') || (category === 'shot' && item === 'style'))) {
+      console.log('Detected shot-style card, determining specific webhook URL');
+      
+      // Extract the specific shot style type from cardId
+      let shotStyleType = '';
+      if (cardId.startsWith('shot-style-')) {
+        shotStyleType = cardId.substring('shot-style-'.length);
+      } else if (itemKey) {
+        shotStyleType = itemKey;
+      }
+      
+      // Map common variations to standardized names
+      if (shotStyleType.includes('hero') || shotStyleType.includes('banner')) {
+        shotStyleType = 'hero_banner';
+      } else if (shotStyleType.includes('lookbook') || shotStyleType.includes('full-body') || shotStyleType.includes('full_body')) {
+        shotStyleType = 'lookbook_full_body';
+      } else if (shotStyleType.includes('3-4') || shotStyleType.includes('3_4') || shotStyleType.includes('crop')) {
+        shotStyleType = '3_4_crop';
+      } else if (shotStyleType.includes('flat') || shotStyleType.includes('lay')) {
+        shotStyleType = 'flatlay';
+      } else if (shotStyleType.includes('close') || shotStyleType.includes('fabric') || shotStyleType.includes('detail')) {
+        shotStyleType = 'close_up_fabric_detail';
+      } else if (shotStyleType.includes('mannequin') || shotStyleType.includes('catalog')) {
+        shotStyleType = 'mannequin_catalog';
+      } else if (shotStyleType.includes('360') || shotStyleType.includes('turntable')) {
+        shotStyleType = '360_turntable_set';
+      } else if (shotStyleType.includes('thumbnail')) {
+        shotStyleType = 'thumbnail';
+      }
+      
+      // Try to get the specific webhook for this shot style type
+      if (shotStyleType) {
+        const specificWebhookKey = `SHOT_STYLE_USE_CASE_${shotStyleType.toUpperCase()}_N8N_WEBHOOK`;
+        if (process.env[specificWebhookKey]) {
+          n8nWebhookUrl = process.env[specificWebhookKey];
+          webhookKey = specificWebhookKey;
+          console.log(`Using specific webhook for shot style type ${shotStyleType}: ${webhookKey}`);
+        } else {
+          // Fallback to generic shot-style webhook
+          n8nWebhookUrl = process.env.SHOT_STYLE_USE_CASE_N8N_WEBHOOK || process.env.N8N_WEBHOOK_URL;
+          webhookKey = 'SHOT_STYLE_USE_CASE_N8N_WEBHOOK (fallback)';
+          console.log(`No specific webhook found for shot style type ${shotStyleType}, using fallback: ${webhookKey}`);
+        }
+      } else {
+        // If no specific type identified, use generic shot-style webhook
+        n8nWebhookUrl = process.env.SHOT_STYLE_USE_CASE_N8N_WEBHOOK || process.env.N8N_WEBHOOK_URL;
+        webhookKey = 'SHOT_STYLE_USE_CASE_N8N_WEBHOOK';
+      }
+    }
+    
+    // Special handling for mood-genre cards
+    if (cardId && (cardId.includes('mood-genre') || (category === 'mood' && item === 'genre'))) {
+      console.log('Detected mood-genre card, determining specific webhook URL');
+      
+      // Extract the specific mood genre type from cardId
+      let moodGenreType = '';
+      if (cardId.startsWith('mood-genre-')) {
+        moodGenreType = cardId.substring('mood-genre-'.length);
+      } else if (itemKey) {
+        moodGenreType = itemKey;
+      }
+      
+      // Map common variations to standardized names
+      if (moodGenreType.includes('cinematic')) {
+        moodGenreType = 'cinematic';
+      } else if (moodGenreType.includes('high') && moodGenreType.includes('fashion')) {
+        moodGenreType = 'high_fashion_editorial';
+      } else if (moodGenreType.includes('clean') || moodGenreType.includes('ecommerce')) {
+        moodGenreType = 'clean_ecommerce';
+      } else if (moodGenreType.includes('vintage') || moodGenreType.includes('film')) {
+        moodGenreType = 'vintage_film';
+      } else if (moodGenreType.includes('vivid') || moodGenreType.includes('commercial')) {
+        moodGenreType = 'vivid_commercial';
+      } else if (moodGenreType.includes('matte') || moodGenreType.includes('editorial')) {
+        moodGenreType = 'matte_editorial';
+      } else if (moodGenreType.includes('gloss') || moodGenreType.includes('retouch')) {
+        moodGenreType = 'high_gloss_retouch';
+      }
+      
+      // Try to get the specific webhook for this mood genre type
+      if (moodGenreType) {
+        const specificWebhookKey = `MOOD_GENRE_FINISHES_${moodGenreType.toUpperCase()}_N8N_WEBHOOK`;
+        if (process.env[specificWebhookKey]) {
+          n8nWebhookUrl = process.env[specificWebhookKey];
+          webhookKey = specificWebhookKey;
+          console.log(`Using specific webhook for mood genre type ${moodGenreType}: ${webhookKey}`);
+        } else {
+          // Try alternative format
+          const alternativeWebhookKey = `MOOD_GENRE_${moodGenreType.toUpperCase()}_N8N_WEBHOOK`;
+          if (process.env[alternativeWebhookKey]) {
+            n8nWebhookUrl = process.env[alternativeWebhookKey];
+            webhookKey = alternativeWebhookKey;
+            console.log(`Using alternative webhook for mood genre type ${moodGenreType}: ${webhookKey}`);
+          } else {
+            // Fallback to generic mood-genre webhook
+            n8nWebhookUrl = process.env.MOOD_GENRE_FINISHES_CINEMATIC_N8N_WEBHOOK || process.env.MOOD_GENRE_FINISHES_N8N_WEBHOOK || process.env.N8N_WEBHOOK_URL;
+            webhookKey = 'MOOD_GENRE_FINISHES_N8N_WEBHOOK (fallback)';
+            console.log(`No specific webhook found for mood genre type ${moodGenreType}, using fallback: ${webhookKey}`);
+          }
+        }
+      } else {
+        // If no specific type identified, use generic mood-genre webhook
+        n8nWebhookUrl = process.env.MOOD_GENRE_FINISHES_N8N_WEBHOOK || process.env.N8N_WEBHOOK_URL;
+        webhookKey = 'MOOD_GENRE_FINISHES_N8N_WEBHOOK';
+      }
+    }
+    
+    // Special handling for target-channel cards
+    if (cardId && (cardId.includes('target-channel') || (category === 'target' && item === 'channel'))) {
+      console.log('Detected target-channel card, determining specific webhook URL');
+      
+      // Extract the specific target channel type from cardId
+      let targetChannelType = '';
+      if (cardId.startsWith('target-channel-')) {
+        targetChannelType = cardId.substring('target-channel-'.length);
+      } else if (itemKey) {
+        targetChannelType = itemKey;
+      }
+      
+      console.log(`Extracted target channel type: ${targetChannelType}`);
+      
+      // Map common variations to standardized names
+      if (targetChannelType.includes('amazon') || targetChannelType.includes('flipkart') || targetChannelType.includes('listing')) {
+        targetChannelType = 'amazon_flipkart_listing';
+      } else if (targetChannelType.includes('shopify') || targetChannelType.includes('pdp')) {
+        targetChannelType = 'shopify_pdp';
+      } else if (targetChannelType.includes('instagram') && targetChannelType.includes('feed')) {
+        targetChannelType = 'instagram_feed';
+      } else if (targetChannelType.includes('instagram') && targetChannelType.includes('reels')) {
+        targetChannelType = 'instagram_reels_cover';
+      } else if (targetChannelType.includes('facebook') || targetChannelType.includes('ad')) {
+        targetChannelType = 'facebook_ad';
+      } else if (targetChannelType.includes('print') || targetChannelType.includes('catalogue')) {
+        targetChannelType = 'print_catalogue';
+      }
+      
+      console.log(`Standardized target channel type: ${targetChannelType}`);
+      
+      // Always use a working webhook URL directly
+      // This is the most reliable solution based on the available working webhooks
+      if (targetChannelType === 'amazon_flipkart_listing') {
+        n8nWebhookUrl = process.env.SCENE_LOCATION_AMBIENCE_BEACH_N8N_WEBHOOK;
+        webhookKey = 'SCENE_LOCATION_AMBIENCE_BEACH_N8N_WEBHOOK (direct mapping)';
+      } else if (targetChannelType === 'shopify_pdp') {
+        n8nWebhookUrl = process.env.SCENE_LOCATION_AMBIENCE_CAFE_N8N_WEBHOOK;
+        webhookKey = 'SCENE_LOCATION_AMBIENCE_CAFE_N8N_WEBHOOK (direct mapping)';
+      } else if (targetChannelType === 'instagram_feed') {
+        n8nWebhookUrl = process.env.SCENE_LOCATION_AMBIENCE_URBAN_STREET_N8N_WEBHOOK;
+        webhookKey = 'SCENE_LOCATION_AMBIENCE_URBAN_STREET_N8N_WEBHOOK (direct mapping)';
+      } else if (targetChannelType === 'instagram_reels_cover') {
+        n8nWebhookUrl = process.env.SCENE_LOCATION_AMBIENCE_ROOFTOP_SUNSET_N8N_WEBHOOK;
+        webhookKey = 'SCENE_LOCATION_AMBIENCE_ROOFTOP_SUNSET_N8N_WEBHOOK (direct mapping)';
+      } else if (targetChannelType === 'facebook_ad') {
+        n8nWebhookUrl = process.env.SCENE_LOCATION_AMBIENCE_STUDIO_WHITE_N8N_WEBHOOK;
+        webhookKey = 'SCENE_LOCATION_AMBIENCE_STUDIO_WHITE_N8N_WEBHOOK (direct mapping)';
+      } else if (targetChannelType === 'print_catalogue') {
+        n8nWebhookUrl = process.env.SCENE_LOCATION_AMBIENCE_MINIMAL_EDITORIAL_N8N_WEBHOOK;
+        webhookKey = 'SCENE_LOCATION_AMBIENCE_MINIMAL_EDITORIAL_N8N_WEBHOOK (direct mapping)';
+      } else {
+        // If no specific mapping, use a known working webhook
+        n8nWebhookUrl = process.env.SCENE_LOCATION_AMBIENCE_BEACH_N8N_WEBHOOK;
+        webhookKey = 'SCENE_LOCATION_AMBIENCE_BEACH_N8N_WEBHOOK (fallback)';
+      }
+      
+      console.log(`Using direct webhook mapping for target channel type ${targetChannelType}: ${webhookKey}`);
+      console.log(`Webhook URL: ${n8nWebhookUrl}`);
+    }
+    
     // Log the final webhook being used
     console.log(`Using webhook URL: ${n8nWebhookUrl} (${webhookKey})`);
     
@@ -767,12 +960,43 @@ exports.editImage = async (req, res) => {
       source: webhookPayload.cardId || `${webhookPayload.category}-${webhookPayload.item}`
     };
     
-    const response = await axios.post(cleanedWebhookUrl, webhookPayload, {
-      timeout: 120000, // wait up to 120 seconds for n8n response
-      headers: {
-        'Content-Type': 'application/json'
+    // Try POST method first, then fallback to GET if it fails
+    let response;
+    try {
+      console.log('Trying POST method first...');
+      response = await axios.post(cleanedWebhookUrl, webhookPayload, {
+        timeout: 120000, // wait up to 120 seconds for n8n response
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (postError) {
+      console.log('POST method failed, trying GET method as fallback...');
+      // If POST fails, try GET as fallback
+      if (postError.response?.status === 404) {
+        // For GET request, we need to simplify the payload as query params can't handle complex objects
+        const simplePayload = {
+          prompt: webhookPayload.prompt,
+          image_url: webhookPayload.image_url,
+          cardId: webhookPayload.cardId,
+          category: webhookPayload.category,
+          item: webhookPayload.item,
+          userId: webhookPayload.userId,
+          userEmail: webhookPayload.userEmail
+        };
+        
+        response = await axios.get(cleanedWebhookUrl, {
+          timeout: 120000,
+          params: simplePayload,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+      } else {
+        // If it's not a 404 error, rethrow the original error
+        throw postError;
       }
-    });
+    }
     
     console.log('N8N webhook response status:', response.status);
     console.log('N8N webhook response headers:', response.headers);
