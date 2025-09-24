@@ -17,7 +17,7 @@ export default function DashboardLayout({ children }) {
         const authenticated = isAuthenticated();
         
         if (!authenticated) {
-          console.log('User not authenticated, redirecting to login');
+          
           // Store the current path to redirect back after login
           if (typeof window !== 'undefined') {
             sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
@@ -26,7 +26,7 @@ export default function DashboardLayout({ children }) {
           return;
         }
         
-        console.log('User authenticated, showing dashboard');
+        
          setIsAuthorized(true);
          setIsLoading(false);
        }, 800); // 800ms delay to ensure cookies are available after login

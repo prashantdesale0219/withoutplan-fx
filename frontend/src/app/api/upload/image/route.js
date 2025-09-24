@@ -12,7 +12,7 @@ export async function POST(request) {
     
     // Forward the request to the backend
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
-    console.log(`Forwarding upload to backend: ${backendUrl}/api/upload/image`);
+    
     
     const response = await fetch(`${backendUrl}/api/upload/image`, {
       method: 'POST',
@@ -23,7 +23,7 @@ export async function POST(request) {
     });
 
     const data = await response.json();
-    console.log('Backend upload response:', data);
+    
 
     if (!response.ok) {
       return NextResponse.json(

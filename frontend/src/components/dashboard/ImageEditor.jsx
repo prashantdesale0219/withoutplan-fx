@@ -255,7 +255,7 @@ const ImageEditor = () => {
             resultJsonStr = resultJsonStr.replace(/\[\s*"\s*`(https?:\/\/[^`]+)`\s*"\s*\]/g, '["$1"]');
             resultJsonStr = resultJsonStr.replace(/\[\s*`(https?:\/\/[^`]+)`\s*\]/g, '["$1"]');
             
-            console.log('Cleaned resultJsonStr:', resultJsonStr);
+            
             
             const resultJson = JSON.parse(resultJsonStr);
             
@@ -294,6 +294,28 @@ const ImageEditor = () => {
             updateCredits(data.credits.remaining);
           } else {
             // Fallback: deduct 1 credit if no specific credit info in response
+            deductCredits(1);
+          }
+        } else if (data.data && data.data.imageUrl) {
+          // Fallback to imageUrl if available directly in the response
+          setResultImage(data.data.imageUrl);
+          toast.success('Image edited successfully!');
+          
+          // Update credits
+          if (data.credits && data.credits.remaining !== undefined) {
+            updateCredits(data.credits.remaining);
+          } else {
+            deductCredits(1);
+          }
+        } else if (data.data && data.data.url) {
+          // Another fallback to url field if available
+          setResultImage(data.data.url);
+          toast.success('Image edited successfully!');
+          
+          // Update credits
+          if (data.credits && data.credits.remaining !== undefined) {
+            updateCredits(data.credits.remaining);
+          } else {
             deductCredits(1);
           }
         } else {

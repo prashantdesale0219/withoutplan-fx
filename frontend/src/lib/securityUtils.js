@@ -55,7 +55,7 @@ export const decryptData = (encryptedData) => {
  * @param {object} data - Additional data
  */
 export const logSecurityEvent = (event, data = {}) => {
-  console.log(`[SECURITY] ${event}`, data);
+  
   // In a real implementation, send to server or monitoring service
 };
 

@@ -16,7 +16,7 @@ const VideoHistory = () => {
       const token = getAuthToken();
       
       if (!token) {
-        console.log('No auth token found, skipping video history load');
+        
         setHistory([]);
         return;
       }
@@ -37,7 +37,7 @@ const VideoHistory = () => {
         }));
         
         setHistory(formattedHistory);
-        console.log('Loaded video history from database:', formattedHistory.length, 'videos');
+        
       } else {
         console.error('Failed to load video history:', response.data.message);
         setHistory([]);
@@ -45,10 +45,10 @@ const VideoHistory = () => {
     } catch (err) {
       console.error('Error loading video history:', err);
       if (err.response?.status === 401) {
-        console.log('User not authenticated, clearing history');
+        
         setHistory([]);
       } else if (err.response?.status === 404) {
-        console.log('Video history endpoint not found, showing empty state');
+        
         setHistory([]);
       } else {
         toast.error('Failed to load video history');
@@ -63,7 +63,7 @@ const VideoHistory = () => {
     
     // Listen for new video generation events
     const handleVideoGenerated = () => {
-      console.log('New video generated, refreshing history...');
+      
       loadVideoHistory();
     };
     
@@ -203,10 +203,7 @@ const VideoHistory = () => {
                   className="w-full h-full object-contain"
                   controls
                   preload="metadata"
-                  onLoadStart={() => console.log(`Video ${item.id} loading started`)}
-                  onLoadedData={() => console.log(`Video ${item.id} loaded successfully`)}
-                  onError={(e) => {
-                    console.error(`Video ${item.id} error:`, e);
+                  onLoadStart={() => 
                     toast.error(`Error loading video ${item.id}`);
                   }}
                   poster="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzMzMzMzMyIvPjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5WaWRlbzwvdGV4dD48L3N2Zz4="

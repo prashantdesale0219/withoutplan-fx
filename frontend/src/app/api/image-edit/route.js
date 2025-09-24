@@ -15,7 +15,7 @@ export async function POST(request) {
       requestData.image_url = requestData.image_url.replace(/`/g, '').trim();
     }
     
-    console.log('Frontend API received image-edit request:', requestData);
+    
     
     // Validate input data
     if (!requestData.prompt || !requestData.image_url) {
@@ -39,7 +39,7 @@ export async function POST(request) {
 
     // Forward the request to the backend
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
-    console.log(`Forwarding to backend: ${backendUrl}/api/image-edit`);
+    
     
     const response = await axios.post(
       `${backendUrl}/api/image-edit`,
@@ -53,11 +53,11 @@ export async function POST(request) {
       }
     );
 
-    console.log('Backend response:', response.data);
+    
     
     // Log credits information if available
     if (response.data && response.data.credits) {
-      console.log('Credits from backend:', response.data.credits);
+      
     }
     
     return NextResponse.json(response.data);

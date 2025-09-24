@@ -23,14 +23,14 @@ const ImageEditorPage = () => {
         setTimeout(async () => {
           // Check authentication using simple token check to avoid validation loops
           if (checkIsAuthenticated()) {
-            console.log('User is authenticated via token check');
+            
             setIsUserAuthenticated(true);
             setIsLoading(false);
             return;
           }
           
           // If not authenticated, redirect to login
-          console.log('User is not authenticated, redirecting to login');
+          
           router.push('/login');
          }, 800); // 800ms delay to ensure cookies are available
       } catch (error) {

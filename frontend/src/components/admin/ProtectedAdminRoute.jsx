@@ -15,30 +15,30 @@ export default function ProtectedAdminRoute({ children }) {
       try {
         // First check if user is authenticated at all
         if (!isAuthenticated()) {
-          console.log('User is not authenticated, redirecting to login');
+          
           router.push('/login');
           return;
         }
 
         // First verify the authentication token
         try {
-          console.log('Verifying admin authentication token');
+          
           await api.get('/auth/verify');
           
           // Then check if user has admin role
-          console.log('Checking if user has admin role');
+          
           const response = await api.get('/auth/me');
           // Handle different response structures
           const userData = response.data.data?.user || response.data;
           
-          console.log('User role from API:', userData.role);
+          
           
           if (userData.role === 'admin') {
-            console.log('User is admin, allowing access to admin dashboard');
+            
             setAuthorized(true);
             setLoading(false);
           } else {
-            console.log('User is not an admin, redirecting to login');
+            
             router.push('/login');
             return;
           }

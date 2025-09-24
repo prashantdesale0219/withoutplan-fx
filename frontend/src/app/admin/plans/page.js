@@ -58,10 +58,10 @@ export default function PlansManagement() {
       
       if (isNewPlan) {
         const response = await planApi.createPlan(formData);
-        console.log('Plan created successfully:', response);
+        
       } else {
         const response = await planApi.updatePlan(formData.id, formData);
-        console.log('Plan updated successfully:', response);
+        
       }
       
       handleCloseModal();

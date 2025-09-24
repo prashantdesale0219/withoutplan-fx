@@ -7,6 +7,8 @@ const cookieParser = require('cookie-parser');
 const compression = require('compression');
 const path = require('path');
 const fs = require('fs');
+const passport = require('./config/passport');
+const session = require('express-session');
 require('dotenv').config();
 
 // Import routes
@@ -36,6 +38,21 @@ app.use(compression());
 // Security middleware
 app.use(helmet());
 
+// Session middleware for passport
+app.use(session({
+  secret: process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+  }
+}));
+
+// Initialize passport
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Rate limiting for auth routes
 const authLimiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
@@ -45,6 +62,21 @@ const authLimiter = rateLimit({
   }
 });
 app.use('/api/auth', authLimiter);
+
+// Session configuration
+app.use(session({
+  secret: process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // CORS configuration
 app.use(cors({

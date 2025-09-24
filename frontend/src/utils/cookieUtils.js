@@ -29,7 +29,7 @@ export const setToken = (token) => {
       console.error('Error setting token in localStorage:', localError);
     }
     
-    console.log('Token set and synchronized between utils and lib');
+    
     return true;
   } catch (error) {
     console.error('Error setting token cookie:', error);
@@ -49,7 +49,7 @@ export const getToken = () => {
       
       // If found in lib cookie, sync back to utils cookie
       if (token) {
-        console.log('Token found in lib cookie, syncing to utils cookie');
+        
         setToken(token);
       }
     }
@@ -59,7 +59,7 @@ export const getToken = () => {
       try {
         token = localStorage.getItem('auth_token');
         if (token) {
-          console.log('Token found in localStorage, syncing to cookies');
+          
           setToken(token);
         }
       } catch (localError) {
@@ -90,7 +90,7 @@ export const removeToken = () => {
       console.error('Error removing token from localStorage:', localError);
     }
     
-    console.log('Token removed and synchronized between utils and lib');
+    
     return true;
   } catch (error) {
     console.error('Error removing token cookie:', error);
@@ -115,7 +115,7 @@ export const setUserData = (userData) => {
       console.error('Error setting user data in localStorage:', localError);
     }
     
-    console.log('User data set and synchronized between utils and lib');
+    
     return true;
   } catch (error) {
     console.error('Error setting user cookie:', error);
@@ -144,7 +144,7 @@ export const getUserData = () => {
       
       // If found in lib cookie, sync back to utils cookie
       if (libUserData) {
-        console.log('User data found in lib cookie, syncing to utils cookie');
+        
         setUserData(libUserData);
         parsedUserData = libUserData;
       }
@@ -156,7 +156,7 @@ export const getUserData = () => {
         const localUserData = localStorage.getItem('user_data');
         if (localUserData) {
           parsedUserData = JSON.parse(localUserData);
-          console.log('User data found in localStorage, syncing to cookies');
+          
           setUserData(parsedUserData);
         }
       } catch (localError) {
@@ -187,7 +187,7 @@ export const removeUserData = () => {
       console.error('Error removing user data from localStorage:', localError);
     }
     
-    console.log('User data removed and synchronized between utils and lib');
+    
     return true;
   } catch (error) {
     console.error('Error removing user cookie:', error);
@@ -229,12 +229,12 @@ export const logout = () => {
     try {
       const historyKey = `imageEditHistory_${userId}`;
       localStorage.removeItem(historyKey);
-      console.log('Cleared user-specific image history for user:', userId);
+      
     } catch (historyError) {
       console.error('Error clearing image history:', historyError);
     }
     
-    console.log('Logout completed and synchronized between utils and lib');
+    
     return true;
   } catch (error) {
     console.error('Error during logout:', error);
@@ -263,19 +263,19 @@ export const syncCookies = () => {
     
     // Sync token (prefer utils token if available)
     if (utilsToken && !libToken) {
-      console.log('Syncing token from utils to lib');
+      
       libCookieUtils.setAuthToken(utilsToken);
     } else if (!utilsToken && libToken) {
-      console.log('Syncing token from lib to utils');
+      
       setToken(libToken);
     }
     
     // Sync user data (prefer utils user data if available)
     if (utilsUserData && !libUserData) {
-      console.log('Syncing user data from utils to lib');
+      
       libCookieUtils.setUserData(utilsUserData);
     } else if (!utilsUserData && libUserData) {
-      console.log('Syncing user data from lib to utils');
+      
       setUserData(libUserData);
     }
     

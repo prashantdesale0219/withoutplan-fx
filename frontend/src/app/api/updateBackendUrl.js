@@ -15,7 +15,7 @@ function updateFile(filePath) {
     );
     
     fs.writeFileSync(filePath, updatedContent, 'utf8');
-    console.log(`Updated: ${filePath}`);
+    
   } catch (error) {
     console.error(`Error updating ${filePath}:`, error);
   }
@@ -40,4 +40,4 @@ function updateAllRouteFiles(directory) {
 const apiDirectory = path.join(__dirname);
 updateAllRouteFiles(apiDirectory);
 
-console.log('All API route files have been updated!');
+

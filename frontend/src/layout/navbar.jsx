@@ -52,7 +52,7 @@ const Navbar = () => {
       setTimeout(() => {
         const tokenAfterDelay = getAuthToken();
         setIsLoggedIn(!!tokenAfterDelay);
-        console.log('Login status checked in navbar:', !!tokenAfterDelay);
+        
       }, 1200); // Increased delay to ensure cookies are set after login redirect
     };
     

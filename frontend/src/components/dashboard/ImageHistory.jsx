@@ -16,7 +16,7 @@ const ImageHistory = () => {
       const token = getAuthToken();
       
       if (!token) {
-        console.log('No auth token found, skipping image history load');
+        
         setHistory([]);
         return;
       }
@@ -35,7 +35,7 @@ const ImageHistory = () => {
         }));
         
         setHistory(formattedHistory);
-        console.log('Loaded image history from database:', formattedHistory.length, 'images');
+        
       } else {
         console.error('Failed to load image history:', response.data.message);
         setHistory([]);
@@ -43,7 +43,7 @@ const ImageHistory = () => {
     } catch (err) {
       console.error('Error loading image history:', err);
       if (err.response?.status === 401) {
-        console.log('User not authenticated, clearing history');
+        
         setHistory([]);
       } else {
         toast.error('Failed to load image history');
@@ -58,7 +58,7 @@ const ImageHistory = () => {
     
     // Listen for new image generation events
     const handleImageGenerated = () => {
-      console.log('New image generated, refreshing history...');
+      
       loadImageHistory();
     };
     

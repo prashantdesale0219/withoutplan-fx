@@ -101,7 +101,7 @@ const BlogPagination = ({ currentPage = 1, totalPages = 15, onPageChange }) => {
             e.preventDefault();
             // Go to previous page when Previous button is clicked
             onPageChange(currentPage - 1);
-            console.log(`Moving to page ${currentPage - 1}`);
+            
           }
         }}
       >
@@ -130,7 +130,7 @@ const BlogPagination = ({ currentPage = 1, totalPages = 15, onPageChange }) => {
             e.preventDefault();
             // Go to next page (2, 3, etc.) when Next button is clicked
             onPageChange(currentPage + 1);
-            console.log(`Moving to page ${currentPage + 1}`);
+            
           }
         }}
       >

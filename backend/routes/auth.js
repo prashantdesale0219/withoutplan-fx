@@ -15,6 +15,8 @@ const {
   resetPassword,
   verifyAuth
 } = require('../controllers/authController');
+const { googleCallback, googleFailure } = require('../controllers/googleAuthController');
+const passport = require('../config/passport');
 const { protect } = require('../middleware/auth');
 const {
   validateRegistration,
@@ -38,6 +40,11 @@ router.post('/verify-email', validateVerifyEmailOTP, verifyEmail);
 router.post('/resend-otp', validateResendOTP, resendOTP);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
+
+// Google OAuth routes
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/api/auth/google/failure' }), googleCallback);
+router.get('/google/failure', googleFailure);
 
 // Protected routes
 router.use(protect); // All routes after this middleware are protected

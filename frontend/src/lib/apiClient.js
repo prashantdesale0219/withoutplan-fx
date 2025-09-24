@@ -27,20 +27,15 @@ apiClient.interceptors.request.use(
     
     // Debug logging for production
     if (process.env.NODE_ENV === 'production') {
-      console.log('API Request Debug:', {
-        url: config.url,
-        method: config.method,
-        hasToken: !!token,
-        tokenLength: token ? token.length : 0
-      });
+      
     }
     
     // Add token to headers if available
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Token added to request headers');
+      
     } else {
-      console.log('No token available for request');
+      
     }
     
     return config;
@@ -70,7 +65,7 @@ apiClient.interceptors.response.use(
             setTimeout(resolve, originalRequest.retryDelay || 1000)
           );
           
-          console.log(`Retrying request (${originalRequest._retryCount}/${originalRequest.retry || 2})`);
+          
           return apiClient(originalRequest);
         }
       }

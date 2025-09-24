@@ -12,7 +12,7 @@ export async function POST(request) {
     
     // Forward the request to the backend
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
-    console.log(`Forwarding audio upload to backend: ${backendUrl}/api/upload/audio`);
+    
     
     const response = await fetch(`${backendUrl}/api/upload/audio`, {
       method: 'POST',
@@ -23,7 +23,7 @@ export async function POST(request) {
     });
 
     const data = await response.json();
-    console.log('Backend audio upload response:', data);
+    
 
     if (!response.ok) {
       return NextResponse.json(

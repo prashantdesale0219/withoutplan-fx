@@ -113,7 +113,7 @@ export const setAuthToken = (token) => {
     path: '/'
   });
   
-  console.log('Auth token stored securely in cookie only');
+  
   
   // Dispatch multiple events to notify other components immediately
   if (typeof window !== 'undefined') {
@@ -149,7 +149,7 @@ export const removeAuthToken = () => {
  * @param {Object} userData - User object
  */
 export const setUserData = (userData) => {
-  console.log('Setting user data in cookie and localStorage:', userData);
+  
   
   // Set in cookie
   setCookie('user_data', JSON.stringify(userData), {
@@ -186,7 +186,7 @@ export const getUserData = () => {
     const localUserData = localStorage.getItem('user_data');
     if (localUserData) {
       const parsedData = JSON.parse(localUserData);
-      console.log('Retrieved user data from localStorage:', parsedData);
+      
       return parsedData;
     }
   } catch (error) {
@@ -230,12 +230,12 @@ export const clearAuthCookies = () => {
     try {
       const historyKey = `imageEditHistory_${userId}`;
       localStorage.removeItem(historyKey);
-      console.log('Cleared user-specific image history for user:', userId);
+      
     } catch (historyError) {
       console.error('Error clearing image history:', historyError);
     }
     
-    console.log('Cleared all auth data from cookies and localStorage for security');
+    
   } catch (error) {
     console.error('Error clearing auth data from localStorage:', error);
   }
@@ -256,12 +256,12 @@ export const isAuthenticated = () => {
   
   // If token exists in cookie, return it (backend will validate)
   if (token) {
-    console.log('Token found in cookie, user is authenticated');
+    
     return token;
   }
   
   // No token found in secure cookie storage
-  console.log('No authentication token found in cookie');
+  
   return false;
 };
 
@@ -311,7 +311,7 @@ export const isAuthenticatedWithValidation = async () => {
   // Validate token with backend
   const isValid = await validateTokenWithBackend(token);
   if (!isValid) {
-    console.log('Token validation failed, clearing auth data');
+    
     clearAuthCookies();
     return false;
   }

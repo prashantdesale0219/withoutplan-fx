@@ -124,10 +124,7 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
 
     try {
       if (isLoginMode) {
-        console.log('Sending login request with credentials using api instance');
-        
         // Login without OTP using our configured api instance
-        console.log('Attempting login with:', formData.email);
         const response = await api.post(
           '/auth/login', 
           {
@@ -137,9 +134,6 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
         );
         
         if (response.data.success) {
-          console.log('Login successful, response:', response.data);
-          console.log('Cookies received:', document.cookie);
-          
           // Set auth token in cookie
           setAuthToken(response.data.data.token);
           setUserData(response.data.data.user);
@@ -147,7 +141,6 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
           // Also store in localStorage as backup
           try {
             localStorage.setItem('user_data', JSON.stringify(response.data.data.user));
-            console.log('User data also stored in localStorage');
           } catch (error) {
             console.error('Failed to store user data in localStorage:', error);
           }
@@ -169,7 +162,6 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
               // First make sure the token is properly set before making authenticated requests
               const token = getAuthToken();
               if (!token) {
-                console.log('Auth token not set yet, setting again');
                 setAuthToken(response.data.data.token);
               }
               
@@ -181,7 +173,7 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
               
               // If user doesn't have credits or has never selected a plan before
               if (userData.credits === 0 || (!userData.planActivatedAt && userData.plan === 'free')) {
-                console.log('Automatically selecting free plan for new user');
+                
                 const planResponse = await api.post('/plans/select', { plan: 'free' });
                 
                 if (planResponse.data.success) {
@@ -208,12 +200,12 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
               const userData = userDataResponse.data.data?.user || userDataResponse.data;
               
               if (userData.role === 'admin') {
-                console.log('Admin user authenticated, redirecting to admin dashboard');
+                
                 router.push('/admin/dashboard');
               } else {
                 // Redirect to the stored path or dashboard if none
                 const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
-                console.log('Redirecting to:', redirectPath);
+                
                 sessionStorage.removeItem('redirectAfterLogin'); // Clear the stored path
                 
                 // Use router.push for smooth navigation without full page reload
@@ -313,8 +305,9 @@ const LoginModalContent = ({ isOpen, onClose, initialMode = 'login' }) => {
   };
 
   const handleGoogleAuth = () => {
-    // TODO: Implement Google OAuth
-    toast.info('Google authentication coming soon!');
+    // Redirect to backend Google OAuth route
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/auth/google`;
+    
   };
 
   const handleAppleAuth = () => {

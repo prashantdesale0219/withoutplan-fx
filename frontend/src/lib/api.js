@@ -12,7 +12,7 @@ const api = axios.create({
   timeout: 15000 // Increased timeout to prevent hanging requests
 });
 
-console.log('API Base URL:', api.defaults.baseURL);
+
 
 // Add a request interceptor to add auth token to every request
 api.interceptors.request.use(
@@ -23,9 +23,9 @@ api.interceptors.request.use(
     // If token exists, add it to the Authorization header
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
-      console.log('Added auth token to request headers');
+      
     } else {
-      console.log('No auth token available for request');
+      
     }
     
     return config;
@@ -40,7 +40,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   response => {
     // Log successful responses for debugging
-    console.log(`API Success: ${response.config.url}`, response.status);
+    
     return response;
   },
   error => {
@@ -68,7 +68,7 @@ api.interceptors.response.use(
       // Only retry if we haven't already tried 3 times
       if (originalRequest._retryCount < 3) {
         originalRequest._retryCount += 1;
-        console.log(`Retrying request (${originalRequest._retryCount}/3)...`);
+        
         
         // Wait for 1 second before retrying
         return new Promise(resolve => {
@@ -96,7 +96,7 @@ api.interceptors.response.use(
     
     // Handle authentication errors
     if (error.response && error.response.status === 401) {
-      console.log('Authentication error detected');
+      
       
       // Check if we're in the login process
       const isLoginProcess = window.location.pathname === '/login' || 
@@ -106,18 +106,18 @@ api.interceptors.response.use(
                               window.location.href.includes('/login') ||
                               window.location.href.includes('/register')));
       
-      console.log('Is login process?', isLoginProcess);
-      console.log('Current path:', window.location.pathname);
+      
+      
       
       // Only redirect if we're not in the login process
       if (!isLoginProcess) {
-        console.log('Not in login process, redirecting to login');
+        
         // Redirect to login page
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
         }
       } else {
-        console.log('In login process, not redirecting for 401 error');
+        
       }
     }
     

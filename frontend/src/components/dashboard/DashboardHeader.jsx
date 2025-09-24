@@ -26,7 +26,7 @@ const DashboardHeader = () => {
           const localUserData = localStorage.getItem('user_data');
           if (localUserData) {
             userData = JSON.parse(localUserData);
-            console.log('Got user data from localStorage');
+            
           }
         } catch (error) {
           console.error('Error parsing user data from localStorage:', error);
@@ -39,14 +39,14 @@ const DashboardHeader = () => {
     const userData = getUserDataFromAll();
     if (userData) {
       setUser(userData);
-      console.log('Initial user data set in header:', userData);
+      
     }
     
     // Add event listener for storage events to update user data in real-time
     const handleStorageChange = () => {
       const updatedUserData = getUserDataFromAll();
       if (updatedUserData) {
-        console.log('Storage changed, updating user data in header:', updatedUserData);
+        
         setUser(updatedUserData);
       }
     };
@@ -115,8 +115,10 @@ const DashboardHeader = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span className='font-semibold'>{formatCreditDisplay(getUserCredits(user))}</span>
-                <span className='ml-1 text-blue-600'>{getUserCredits(user) === 1 ? 'Credit' : 'Credits'}</span>
+                <span className='font-semibold'>
+                  {user?.credits || 0}
+                </span>
+                <span className='ml-1 text-blue-600'>Credits</span>
               </div>
             )}
           </div>

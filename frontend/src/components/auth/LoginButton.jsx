@@ -29,14 +29,14 @@ const LoginButton = () => {
             try {
               setUser(userData);
               setIsLoggedIn(true);
-              console.log('User is logged in - LoginButton component');
+              
             } catch (error) {
               console.error('Error parsing user data:', error);
               setIsLoggedIn(false);
             }
           } else {
             setIsLoggedIn(false);
-            console.log('User is not logged in - LoginButton component');
+            
           }
         } catch (error) {
           console.error('Error checking auth status:', error);

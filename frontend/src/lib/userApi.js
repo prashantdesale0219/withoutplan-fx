@@ -17,7 +17,7 @@ const userApi = {
    * @returns {Promise} - API response
    */
   getUserProfile: async () => {
-    return api.get('/user/profile');
+    return api.get('/api/user/profile');
   },
   
   /**
@@ -26,7 +26,7 @@ const userApi = {
    * @returns {Promise} - API response
    */
   updateProfile: async (profileData) => {
-    return api.put('/user/profile', profileData);
+    return api.put('/api/user/profile', profileData);
   },
   
   /**
@@ -35,7 +35,7 @@ const userApi = {
    * @returns {Promise} - API response
    */
   updateUserProfile: async (profileData) => {
-    return api.put('/user/profile', profileData);
+    return api.put('/api/user/profile', profileData);
   },
   
   /**
@@ -44,7 +44,7 @@ const userApi = {
    * @returns {Promise} - API response
    */
   changePassword: async (passwordData) => {
-    return api.put('/user/change-password', passwordData);
+    return api.put('api/user/change-password', passwordData);
   },
   
   /**

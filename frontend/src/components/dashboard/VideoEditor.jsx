@@ -310,7 +310,7 @@ const VideoEditor = () => {
       let data;
       try {
         const responseText = await response.text();
-        console.log('Raw response:', responseText);
+        
         
         // Check if response starts with "Internal S" (likely "Internal Server Error")
         if (responseText.startsWith('Internal S')) {
@@ -546,10 +546,7 @@ const VideoEditor = () => {
                     controls
                     preload="metadata"
                     className="w-full h-full object-contain"
-                    onLoadStart={() => console.log('Video loading started')}
-                    onLoadedData={() => console.log('Video loaded successfully')}
-                    onError={(e) => {
-                      console.error('Video error:', e);
+                    onLoadStart={() => 
                       toast.error('Error loading video. Please try downloading it directly.');
                     }}
                     poster="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzMzMzMzMyIvPjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5WaWRlbzwvdGV4dD48L3N2Zz4="
